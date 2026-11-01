@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZlatkoAI</string>
+    <string name="title_activity_main">ZlatkoAI</string>
+    <string name="package_name">com.zlatko.ai</string>
+    <string name="custom_url_scheme">com.zlatko.ai</string>
+</resources>

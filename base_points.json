@@ -1,0 +1,21 @@
+{
+  "base_points": [
+    {"id": 1, "name": "Zlatko AI Mode"},
+    {"id": 2, "name": "Gemini za nadgradba"},
+    {"id": 3, "name": "Web strana"},
+    {"id": 4, "name": "Sportski vesti"},
+    {"id": 5, "name": "Real Madrid Info"},
+    {"id": 6, "name": "F1 Info"},
+    {"id": 7, "name": "Viber"},
+    {"id": 8, "name": "WhatsApp"},
+    {"id": 9, "name": "Facebook"},
+    {"id": 10, "name": "Instagram"},
+    {"id": 11, "name": "Gmail"},
+    {"id": 12, "name": "Projekt Preveduvac"},
+    {"id": 13, "name": "Projekt Blokator"},
+    {"id": 14, "name": "QR kod"},
+    {"id": 15, "name": "+ Za dodavanje aplikacija"}
+  ],
+  "assigned_projects_range": "1 - 99999",
+  "active_modules_per_project": [1, 4, 5, 6, 12, 13, 15]
+}
