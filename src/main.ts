@@ -1,158 +1,52 @@
 import './style.css'
 
-const modules = [
-  { id: 1, name: "Zlatko AI (Ultimate Fusion)", icon: "🌪️", color: "#FBBF24" },
-  { id: 2, name: "Gemini za nadgradba", icon: "✨", color: "#3B82F6" },
-  { id: 3, name: "Web strana", icon: "🌐", color: "#06B6D4" },
-  { id: 4, name: "Sportski vesti", icon: "⚽", color: "#10B981" },
-  { id: 5, name: "Real Madrid Info", icon: "👑", color: "#F59E0B" },
-  { id: 6, name: "F1 Info", icon: "🏎️", color: "#EF4444" },
-  { id: 7, name: "Viber", icon: "💜", color: "#8B5CF6" },
-  { id: 8, name: "WhatsApp", icon: "💬", color: "#22C55E" },
-  { id: 9, name: "Facebook", icon: "🔵", color: "#2563EB" },
-  { id: 10, name: "Instagram", icon: "📸", color: "#EC4899" },
-  { id: 11, name: "Gmail", icon: "✉️", color: "#EA4335" },
-  { id: 12, name: "Proekt Preveduvac", icon: "🗣️", color: "#14B8A6" },
-  { id: 13, name: "Proekt Blokator", icon: "🛡️", color: "#F97316" },
-  { id: 14, name: "QR kod", icon: "📱", color: "#64748B" },
-  { id: 15, name: "Za dodavanje aplikacija", icon: "➕", color: "#6B7280" },
-  { id: 16, name: "Excel Kalkulator", icon: "📊", color: "#4ade80" }
-];
-
-window.renderDashboard = () => {
-  document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-    <div id="main-dashboard" class="dashboard no-print">
-      <header>
-        <h1>🚀 Zlatko AI Mode Core</h1>
-        <div class="system-stats">
-          <div class="stat-box"><span class="stat-label">Работници</span><span class="stat-value">99,999</span></div>
-        </div>
-      </header>
-      <div class="section-title">Системски Полиња</div>
-      <div class="grid">
-        ${modules.map(mod => {
-          if (mod.id === 1) {
-            return `<div class="card active-card main-core-card" style="border-left: 4px solid ${mod.color}">
-              <div class="icon">${mod.icon}</div><h3>${mod.name}</h3>
-              <p class="status">Споени сите 11 сили во една</p>
-              <button class="btn btn-play" style="background: #FBBF24; color: black;" onclick="window.openModule(${mod.id})">Otvori Ultimate Fusion</button>
-            </div>`;
-          }
-          return `<div class="card active-card" style="border-left: 4px solid ${mod.color}">
-            <div class="icon">${mod.icon}</div><h3>${mod.name}</h3>
-            <button class="btn" onclick="window.openModule(${mod.id})">Otvori</button>
-          </div>`;
-        }).join('')}
+document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+  <div class="app">
+    <header class="topbar">
+      <span>💻 Код</span>
+      <button id="btn-run" class="btn-run">▶ Конвертирај во Слика</button>
+    </header>
+    <div class="main">
+      <textarea id="code-input" spellcheck="false">
+// Внеси го твојот код тука
+function zlatko() {
+  console.log("Zdravo od Zlatko AI!");
+  return true;
+}
+      </textarea>
+      <div id="image-container" class="image-container">
+        <p style="color: #64748b;">Сликата ќе се појави тука...</p>
       </div>
     </div>
-    <div id="module-screen" style="display: none;" class="dashboard"></div>
-  `;
-}
+  </div>
+`;
 
-window.openModule = (id: number) => {
-  const dashboard = document.getElementById('main-dashboard');
-  const moduleScreen = document.getElementById('module-screen');
-  if (!dashboard || !moduleScreen) return;
+document.getElementById('btn-run')!.addEventListener('click', async () => {
+  const code = (document.getElementById('code-input') as HTMLTextAreaElement).value;
+  const container = document.getElementById('image-container')!;
+  const btn = document.getElementById('btn-run') as HTMLButtonElement;
 
-  dashboard.style.display = 'none';
-  moduleScreen.style.display = 'block';
-  
-  const mod = modules.find(m => m.id === id);
-  if (!mod) return;
+  btn.innerText = "⏳ Се обработува...";
+  btn.disabled = true;
+  container.innerHTML = '<p style="color: #38bdf8;">⏳ Termux ја генерира сликата...</p>';
 
-  let content = '';
+  try {
+    const response = await fetch('http://127.0.0.1:3000/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    });
 
-  if (id === 1) {
-    // ULTIMATE FUSION SCREEN
-    content = `
-      <div class="fusion-container no-print">
-        <h2 style="color: #FBBF24; text-align: center; font-size: 2rem; text-transform: uppercase;">🌪️ Ultimate Fusion Engine</h2>
-        <p style="text-align: center; color: #94a3b8; margin-bottom: 2rem;">Кликни за да ги споиме сите 11 сили во еден совршен AI мозок.</p>
-        
-        <div class="fusion-grid">
-          <div class="fusion-item" style="border-color: #F97316;">🦊<br>Лисица<br><small>Value</small></div>
-          <div class="fusion-item" style="border-color: #64748B;">🐺<br>Волк<br><small>Тим</small></div>
-          <div class="fusion-item" style="border-color: #78350F;">🐻<br>Мечка<br><small>Сила</small></div>
-          <div class="fusion-item" style="border-color: #94A3B8;">🐰<br>Зајак<br><small>Брзина</small></div>
-          <div class="fusion-item" style="border-color: #38BDF8;">🦅<br>Орел<br><small>Вид</small></div>
-          <div class="fusion-item" style="border-color: #EF4444;">🏎️<br>F1<br><small>Прецизност</small></div>
-          <div class="fusion-item" style="border-color: #A16207;">🐕<br>Куче<br><small>Траги</small></div>
-          <div class="fusion-item" style="border-color: #FBBF24;">👤<br>Човек<br><small>Мозок</small></div>
-          <div class="fusion-item" style="border-color: #06B6D4;">🖥️<br>Компјутер<br><small>Логика</small></div>
-          <div class="fusion-item" style="border-color: #10B981;">💻<br>Кодирање<br><small>Мозок</small></div>
-          <!-- НОВО: GOOGLE STREET -->
-          <div class="fusion-item" style="border-color: #4285F4;">🌍<br>Google Street<br><small>Географија</small></div>
-        </div>
-
-        <div style="text-align: center; margin-top: 2rem;">
-          <button class="btn" style="background: #8B5CF6; font-size: 1.2rem; padding: 1rem; box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);" onclick="window.triggerFusion()">🔥 СПОЈ ГИ СИТЕ СИЛИ</button>
-        </div>
-
-        <div id="fusion-result" style="display: none; margin-top: 2rem; background: #0f172a; padding: 2rem; border-radius: 12px; border: 2px solid #FBBF24; text-align: left;"></div>
-      </div>
-    `;
-  } else if (id === 16) {
-    content = `
-      <div class="terminal-box">
-        <p class="terminal-text">> [MODULE] Excel Kalkulatorot e aktiven.</p>
-      </div>
-    `;
-  } else {
-    content = `<div class="terminal-box"><p class="terminal-text">> [MODULE] Активен...</p></div>`;
-  }
-
-  moduleScreen.innerHTML = `
-    <div class="module-header no-print">
-      <button class="btn-back" onclick="window.closeModule()">⬅️ Назад</button>
-      <h1>${mod.icon} ${mod.name}</h1>
-    </div>
-    <div class="module-body">${content}</div>
-  `;
-}
-
-// ФУНКЦИЈА ЗА ФУЗИЈА
-window.triggerFusion = () => {
-  const resultDiv = document.getElementById('fusion-result');
-  if (!resultDiv) return;
-
-  resultDiv.style.display = 'block';
-  resultDiv.innerHTML = `<h3 style="color: #FBBF24;">> [СИСТЕМ] Започнува спојување на силите...</h3>`;
-  
-  const steps = [
-    "> Внесување на брзината на F1 и Зајакот...",
-    "> Активирање на видот на Орелот (скенирање на 35 лиги)...",
-    "> Вклучување на трагачот (Куче) за движење на коефициенти...",
-    "> Додавање на лукавството на Лисицата (Smart Money)...",
-    "> Синхронизирање на Волкот со 99.999 работници...",
-    "> Вградување на силата на Мечката (Bankroll)...",
-    "> Качување на човечкиот мозок (Deep Thinking)...",
-    "> Внесување на компјутерската логика (0 и 1, 100% прецизност)...",
-    "> Додавање на мозокот за кодирање (Програмирање)...",
-    // НОВ ЧЕКОР ЗА GOOGLE STREET
-    "> 🌍 [GOOGLE STREET] Скенирање на локации, стадиони, временски услови и патувања на тимовите...",
-    "> ✅ ФУЗИЈАТА Е ЗАВРШЕНА! ZLATKO AI E СЕСИЛЕН."
-  ];
-
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < steps.length) {
-      resultDiv.innerHTML += `<p style="color: #4ade80; font-family: monospace; margin: 5px 0;">${steps[i]}</p>`;
-      i++;
+    const data = await response.json();
+    if (data.image) {
+      container.innerHTML = `<img src="${data.image}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);" />`;
     } else {
-      clearInterval(interval);
-      resultDiv.innerHTML += `
-        <div style="margin-top: 1rem; padding: 1rem; background: #1e1b4b; border-radius: 8px; border-left: 4px solid #FBBF24;">
-          <h2 style="color: #c084fc; margin: 0;">🌪️ ZLATKO AI ULTIMATE</h2>
-          <p style="color: white;">Сега ги имам сите 11 сили. Можам да ја проверам и локацијата на стадионот, времето, и се. Кажи ми што да анализираме.</p>
-        </div>
-      `;
+      container.innerHTML = `<p style="color: #ef4444;">Грешка: ${data.error}</p>`;
     }
-  }, 800);
-}
-
-window.closeModule = () => {
-  document.getElementById('main-dashboard')!.style.display = 'block';
-  document.getElementById('module-screen')!.style.display = 'none';
-}
-
-window.renderDashboard();
+  } catch (error) {
+    container.innerHTML = `<p style="color: #ef4444;">Не можам да се поврзам со Termux. Дали server.js работи?</p>`;
+  } finally {
+    btn.innerText = "▶ Конвертирај во Слика";
+    btn.disabled = false;
+  }
+});

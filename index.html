@@ -1,13 +1,128 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>zlatkoalmode</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZLATKOALMODE</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #121212; color: #eee; margin: 0; padding: 16px; }
+    h1 { font-size: 20px; color: #4caf50; }
+    textarea { width: 100%; height: 160px; background: #1e1e1e; color: #eee; border: 1px solid #333; border-radius: 8px; padding: 10px; font-size: 14px; box-sizing: border-box; }
+    button { margin-top: 10px; background: #4caf50; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:active { background: #3d8b40; }
+    #rezultati { margin-top: 20px; }
+    .mec { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .mec-naslov { font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ishod { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-top: 1px solid #2a2a2a; }
+    .ishod:first-of-type { border-top: none; }
+    .ishod-info { display: flex; align-items: center; gap: 8px; }
+    .predlog { color: #4caf50; font-weight: bold; white-space: nowrap; }
+    .procent { color: #bbb; font-size: 13px; }
+    .btn-obrazlozenie { background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; font-size: 12px; border-radius: 6px; margin-top: 8px; cursor: pointer; }
+    .obrazlozenie { display: none; font-size: 13px; color: #aaa; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #333; }
+    .obrazlozenie.vidlivo { display: block; }
+    input[type="checkbox"] { width: 18px; height: 18px; }
+    .nema-mecevi { color: #888; font-style: italic; }
+    .nepoznato { color: #e67e22; }
+  </style>
+</head>
+<body>
+  <h1>ZLATKOALMODE</h1>
+  <textarea id="vnesBilten" placeholder="Залепи го билтенот тука..."></textarea>
+  <button id="btnAnaliziraj">Анализирај</button>
+  <div id="rezultati"></div>
+  <script>
+    function jeDecimalen(tokenRaw) {
+      return /^\d+[.,]\d+$/.test(tokenRaw);
+    }
+    function parsirajBilten(tekst) {
+      const linii = tekst.split('\n');
+      const mecevi = [];
+      for (const linijaRaw of linii) {
+        const linija = linijaRaw.trim();
+        if (!linija) continue;
+        const tokeni = linija.split(/\s+/);
+        if (tokeni.length < 7) continue;
+        const den = tokeni[0];
+        const vreme = tokeni[1];
+        const sifra = tokeni[2];
+        let decIdx = -1;
+        for (let i = 3; i < tokeni.length; i++) {
+          if (jeDecimalen(tokeni[i])) { decIdx = i; break; }
+        }
+        if (decIdx === -1 || decIdx + 2 >= tokeni.length) continue;
+        if (!jeDecimalen(tokeni[decIdx]) || !jeDecimalen(tokeni[decIdx + 1]) || !jeDecimalen(tokeni[decIdx + 2])) continue;
+        const k1 = parseFloat(tokeni[decIdx].replace(',', '.'));
+        const kx = parseFloat(tokeni[decIdx + 1].replace(',', '.'));
+        const k2 = parseFloat(tokeni[decIdx + 2].replace(',', '.'));
+        if (isNaN(k1) || isNaN(kx) || isNaN(k2)) continue;
+        const domakin = tokeni.slice(3, decIdx).join(' ').trim();
+        if (!domakin) continue;
+        const gostiTokeni = [];
+        let i = decIdx + 3;
+        while (i < tokeni.length && !jeDecimalen(tokeni[i])) {
+          gostiTokeni.push(tokeni[i]);
+          i++;
+        }
+        const gosti = gostiTokeni.join(' ').trim();
+        if (!gosti) continue;
+        mecevi.push({ den, vreme, sifra, domakin, gosti, k1, kx, k2 });
+      }
+      return mecevi;
+    }
+    function presmetajProcenti(k1, kx, k2) {
+      const p1 = 1 / k1; const pX = 1 / kx; const p2 = 1 / k2;
+      const vkupno = p1 + pX + p2;
+      return { p1: (p1 / vkupno) * 100, pX: (pX / vkupno) * 100, p2: (p2 / vkupno) * 100, marza: (vkupno - 1) * 100 };
+    }
+    function najdiPredlog(p1, pX, p2) {
+      if (p1 >= pX && p1 >= p2) return '1';
+      if (pX >= p1 && pX >= p2) return 'X';
+      return '2';
+    }
+    function objasnenie(mec, predlog, procenti) {
+      const { domakin, gosti, k1, kx, k2 } = mec;
+      const nazivIshod = { '1': domakin, 'X': 'нерешено', '2': gosti };
+      const procentPredlog = { '1': procenti.p1, 'X': procenti.pX, '2': procenti.p2 }[predlog];
+      return `Коефициентите (${k1} / ${kx} / ${k2}) сугерираат дека пазарот го гледа исходот "${predlog}" (${nazivIshod[predlog]}) како најверојатен, со проценета веројатност од ${procentPredlog.toFixed(1)}% откако е отстранета маржата на букмејкерот (вкупна маржа: ${procenti.marza.toFixed(1)}%). Ова е чисто статистичко читање на коефициентите, не гарантирана прогноза.`;
+    }
+    function prikaziRezultati(mecevi) {
+      const kontejner = document.getElementById('rezultati');
+      kontejner.innerHTML = '';
+      if (mecevi.length === 0) {
+        kontejner.innerHTML = '<p class="nema-mecevi">Не се пронајдени мечеви. Провери го форматот на билтенот.</p>';
+        return;
+      }
+      mecevi.forEach((mec, index) => {
+        const procenti = presmetajProcenti(mec.k1, mec.kx, mec.k2);
+        const predlog = najdiPredlog(procenti.p1, procenti.pX, procenti.p2);
+        const div = document.createElement('div');
+        div.className = 'mec';
+        div.innerHTML = `
+          <div class="mec-naslov">
+            <span>${mec.den} ${mec.vreme} [${mec.sifra}] — ${mec.domakin} vs ${mec.gosti}</span>
+            <span class="predlog">Предлог: ${predlog}</span>
+          </div>
+          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="1" data-opis="${mec.domakin}"><span>1 (${mec.domakin})</span></div><span class="procent">${procenti.p1.toFixed(1)}%</span></div>
+          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="X" data-opis="нерешено"><span>X (нерешено)</span></div><span class="procent">${procenti.pX.toFixed(1)}%</span></div>
+          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="2" data-opis="${mec.gosti}"><span>2 (${mec.gosti})</span></div><span class="procent">${procenti.p2.toFixed(1)}%</span></div>
+          <button class="btn-obrazlozenie" data-index="${index}">Образложение</button>
+          <div class="obrazlozenie" id="obr-${index}">${objasnenie(mec, predlog, procenti)}</div>
+        `;
+        kontejner.appendChild(div);
+      });
+      document.querySelectorAll('.btn-obrazlozenie').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById('obr-' + btn.dataset.index);
+          target.classList.toggle('vidlivo');
+        });
+      });
+    }
+    document.getElementById('btnAnaliziraj').addEventListener('click', () => {
+      const tekst = document.getElementById('vnesBilten').value;
+      const mecevi = parsirajBilten(tekst);
+      prikaziRezultati(mecevi);
+    });
+  </script>
+</body>
 </html>
