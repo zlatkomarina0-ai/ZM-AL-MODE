@@ -1,32 +1,22 @@
-export default {
-  async fetch(request, env) {
-    if (request.method !== "POST") {
-      return new Response("Method not allowed", { status: 405 });
-    }
+cat > /storage/internal_new/project/ZLATKOALMODE/.github/workflows/deploy-worker.yml << 'EOF'
+name: Deploy Cloudflare Worker
+on:
+  push:
+    paths:
+      - 'cloudflare-worker/**'
+  workflow_dispatch:
 
-    const { message } = await request.json();
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    const geminiResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-goog-api-key": env.GEMINI_API_KEY
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }]
-        })
-      }
-    );
-
-    const data = await geminiResponse.json();
-
-    return new Response(JSON.stringify(data), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
-    });
-  }
-};
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'cloudflare-worker'
+          command: deploy worker.js --name zlatko-api --compatibility-date 2024-01-01
+EOF
