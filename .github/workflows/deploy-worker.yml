@@ -8,9 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cloudflare-worker
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,3 +16,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'cloudflare-worker'
+          command: deploy worker.js --name zlatko-api --compatibility-date 2024-01-01
