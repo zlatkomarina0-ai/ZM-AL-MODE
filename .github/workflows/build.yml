@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up JDK 21
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'temurin'
@@ -33,11 +33,10 @@ jobs:
     - name: Sync Capacitor
       run: npx cap sync android
 
-    - name: Clean Gradle Properties (Force Remove Local Paths)
+    - name: Force Remove Local Java Paths from gradle.properties
       run: |
-        echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" > android/gradle.properties
-        echo "android.useAndroidX=true" >> android/gradle.properties
-        echo "android.enableJetifier=true" >> android/gradle.properties
+        find . -name "gradle.properties" -type f -exec sed -i '/org.gradle.java.home/d' {} +
+        echo "Removed all org.gradle.java.home lines."
 
     - name: Build APK
       run: |
