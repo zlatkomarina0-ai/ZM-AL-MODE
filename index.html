@@ -2,127 +2,420 @@
 <html lang="mk">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>ZLATKOALMODE</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #121212; color: #eee; margin: 0; padding: 16px; }
-    h1 { font-size: 20px; color: #4caf50; }
-    textarea { width: 100%; height: 160px; background: #1e1e1e; color: #eee; border: 1px solid #333; border-radius: 8px; padding: 10px; font-size: 14px; box-sizing: border-box; }
-    button { margin-top: 10px; background: #4caf50; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; }
-    button:active { background: #3d8b40; }
-    #rezultati { margin-top: 20px; }
-    .mec { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-    .mec-naslov { font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .ishod { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-top: 1px solid #2a2a2a; }
-    .ishod:first-of-type { border-top: none; }
-    .ishod-info { display: flex; align-items: center; gap: 8px; }
-    .predlog { color: #4caf50; font-weight: bold; white-space: nowrap; }
-    .procent { color: #bbb; font-size: 13px; }
-    .btn-obrazlozenie { background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; font-size: 12px; border-radius: 6px; margin-top: 8px; cursor: pointer; }
-    .obrazlozenie { display: none; font-size: 13px; color: #aaa; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #333; }
-    .obrazlozenie.vidlivo { display: block; }
-    input[type="checkbox"] { width: 18px; height: 18px; }
-    .nema-mecevi { color: #888; font-style: italic; }
-    .nepoznato { color: #e67e22; }
+    :root { --bg-body: #0a0f1c; --bg-surface: #131c31; --bg-elevated: #1e2a47; --primary: #fbbf24; --primary-hover: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444; --border: #1c3b5e; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    #lockScreen { position: fixed; inset: 0; background: linear-gradient(145deg, #0a0f1c 0%, #131c31 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    #pinDisplay { font-size: 32px; letter-spacing: 12px; margin-bottom: 40px; color: var(--primary); font-weight: bold; }
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 280px; }
+    .keypad button { background: rgba(30, 42, 71, 0.6); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); font-size: 26px; font-weight: 500; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+    .keypad button:active { background: var(--primary); color: var(--bg-body); transform: scale(0.95); }
+    
+    header { background-color: var(--bg-surface); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(to right, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-icon { font-size: 22px; color: var(--text-muted); cursor: pointer; }
+    
+    .main-content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+    .tab-content { display: none; padding: 15px; animation: slideUp 0.3s ease-out; }
+    .tab-content.active { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { font-size: 16px; color: var(--text-muted); margin-bottom: 16px; font-weight: 600; text-transform: uppercase; }
+    
+    .input-container { background: var(--bg-surface); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+    .download-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+    .download-btn { flex: 1; background: #105eb3; color: white; padding: 12px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: bold; font-size: 13px; border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+    textarea { width: 100%; height: 100px; background: var(--bg-body); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; font-size: 13px; resize: none; margin-bottom: 12px; }
+    button.btn-analyze { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: #000; font-weight: 700; border: none; padding: 14px; border-radius: 8px; font-size: 15px; cursor: pointer; text-transform: uppercase; }
+
+    .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; min-width: 550px; }
+    th { background-color: #0d3b66; color: var(--primary); padding: 10px 5px; font-weight: bold; border: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 10px 5px; border: 1px solid var(--border); white-space: nowrap; }
+    tr:nth-child(even) { background-color: var(--bg-surface); }
+    tr:nth-child(odd) { background-color: var(--bg-body); }
+    tr:active { background-color: #1e3a8a; }
+    
+    .team-col { text-align: left; font-weight: 600; min-width: 140px; }
+    .time-col { color: var(--text-muted); font-size: 11px; }
+    .code-col { color: var(--primary); font-weight: bold; font-size: 13px; }
+    .odds-val { font-weight: bold; color: #fff; }
+    .prob-val { font-size: 10px; color: var(--success); display: block; }
+    .excel-tip { background-color: var(--success); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+
+    .news-switch { display: flex; gap: 10px; margin-bottom: 20px; }
+    .news-btn { flex: 1; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 10px; text-align: center; font-weight: bold; font-size: 13px; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s; }
+    .news-btn.active { background: #105eb3; color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(16, 94, 179, 0.3); }
+    
+    .news-item { padding: 12px 16px; background: var(--bg-surface); border-radius: 8px; margin-bottom: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); }
+
+    .folder-title { font-size: 13px; color: var(--primary); margin: 15px 0 10px 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; }
+    .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .bg-fb { background: #1877F2; } .bg-ig { background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%); } .bg-viber { background: #7360F2; } .bg-wa { background: #25D366; } .bg-sl { background: #0056b3; } .bg-stb { background: #d32f2f; } .bg-ddv { background: #00897b; } .bg-yt { background: #FF0000; } .bg-gmail { background: #fff; color: #d93025; } .bg-chrome { background: #fff; } .bg-gal { background: #ff9800; } .bg-drive { background: #4285F4; } .bg-trans { background: #475569; } .bg-block { background: #ef4444; } .bg-web { background: #0ea5e9; } .bg-plus { background: #10b981; } .bg-dict { background: #8b5cf6; } .bg-msg { background: #3b82f6; } .bg-store { background: #34a853; } .bg-cal { background: #ec4899; } .bg-auth { background: #f97316; } .bg-aide { background: #0ea5e9; } .bg-term { background: #111; } .bg-git { background: #24292e; } .bg-clock { background: #64748b; }
+
+    .chat-container { display: flex; flex-direction: column; height: calc(100vh - 180px); }
+    .chat-history { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+    .msg.user { background: var(--bg-elevated); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.bot { background: var(--primary); color: #000; align-self: flex-start; border-bottom-left-radius: 4px; font-weight: 500; }
+    .chat-input { display: flex; gap: 10px; margin-top: 10px; }
+    .chat-input input { flex: 1; background: var(--bg-surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 0 20px; color: #fff; }
+    .chat-input button { background: var(--primary); border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; cursor: pointer; }
+
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(19, 28, 49, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 10px 0 15px 0; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: var(--text-muted); width: 25%; }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 22px; margin-bottom: 4px; }
+    .nav-text { font-size: 10px; font-weight: 600; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-content { background: var(--bg-surface); padding: 20px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
   </style>
 </head>
 <body>
-  <h1>ZLATKOALMODE</h1>
-  <textarea id="vnesBilten" placeholder="Залепи го билтенот тука..."></textarea>
-  <button id="btnAnaliziraj">Анализирај</button>
-  <div id="rezultati"></div>
+
+  <div id="lockScreen">
+    <div id="pinDisplay">○○○○</div>
+    <div class="keypad">
+      <button onclick="vnesiBroj(1)">1</button><button onclick="vnesiBroj(2)">2</button><button onclick="vnesiBroj(3)">3</button>
+      <button onclick="vnesiBroj(4)">4</button><button onclick="vnesiBroj(5)">5</button><button onclick="vnesiBroj(6)">6</button>
+      <button onclick="vnesiBroj(7)">7</button><button onclick="vnesiBroj(8)">8</button><button onclick="vnesiBroj(9)">9</button>
+      <button onclick="izbrisiBroj()" style="color: var(--danger);">⌫</button><button onclick="vnesiBroj(0)">0</button><button onclick="proveriKod()" style="color: var(--success);">✓</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-icon" onclick="otvoriQR()">⚙️</div>
+    <h1>ZLATKOALMODE</h1>
+    <div class="header-icon" onclick="location.reload()">↻</div>
+  </header>
+
+  <div class="main-content">
+    <div id="tab-types" class="tab-content active">
+      <div class="section-title">Анализа (Excel Табела)</div>
+      <div class="input-container">
+        <div class="download-btns">
+            <button onclick="otvoriVoBrowser('https://sportlife.com.mk/Oblozuvanje.aspx')" class="download-btn">📥 БИЛТЕН</button>
+            <button onclick="otvoriVoBrowser('https://sportlife.com.mk/Oblozuvanje.aspx')" class="download-btn">📥 ДОДАТОК</button>
+        </div>
+        <textarea id="vnesBilten" placeholder="Залепи го целиот билтен овде..."></textarea>
+        <button class="btn-analyze" id="btnAnaliziraj">АНАЛИЗИРАЈ ШИФРИ</button>
+      </div>
+      <div id="rezultati"></div>
+    </div>
+
+    <div id="tab-news" class="tab-content">
+      <div class="section-title">Вести во живо</div>
+      
+      <div class="news-switch">
+        <div class="news-btn active" id="btn-news-f1" onclick="switchNews('f1', this)">
+          <span style="font-size:24px;">🏎️</span> ФОРМУЛА 1
+        </div>
+        <div class="news-btn" id="btn-news-rm" onclick="switchNews('rm', this)">
+          <span style="font-size:24px;">⚽</span> РЕАЛ МАДРИД
+        </div>
+      </div>
+
+      <div id="news-f1-container" class="news-container" style="display: block;">
+        <div id="newsF1"><p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p></div>
+      </div>
+
+      <div id="news-rm-container" class="news-container" style="display: none;">
+        <div id="newsRM"><p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p></div>
+      </div>
+    </div>
+
+    <div id="tab-social" class="tab-content">
+      
+      <div class="folder-title">📱 Социјални мрежи</div>
+      <div class="app-grid" style="margin-bottom: 20px;">
+        <div class="app-item" onclick="otvoriAplikacija('fb://')"><div class="app-icon bg-fb">📘</div><div class="app-name">Facebook</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('instagram://')"><div class="app-icon bg-ig">📸</div><div class="app-name">Instagram</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('viber://')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('whatsapp://')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
+      </div>
+
+      <div class="folder-title">⚽ Спорт и Забава</div>
+      <div class="app-grid" style="margin-bottom: 20px;">
+        <div class="app-item" onclick="otvoriAplikacija('sportlife://')"><div class="app-icon bg-sl">🏃</div><div class="app-name">Sport Life</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('vnd.youtube://')"><div class="app-icon bg-yt">▶️</div><div class="app-name">YouTube</div></div>
+      </div>
+
+      <div class="folder-title">🏦 Финансии и Документи</div>
+      <div class="app-grid" style="margin-bottom: 20px;">
+        <div class="app-item" onclick="window.location.href='https://www.stb.com.mk/'"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB Банка</div></div>
+        <div class="app-item" onclick="window.location.href='https://myddv.ujp.gov.mk/'"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('googledrive://')"><div class="app-icon bg-drive">📁</div><div class="app-name">Мои датотеки</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('content://com.android.calendar/time')"><div class="app-icon bg-cal">📅</div><div class="app-name">Календар</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('googlegmail://')"><div class="app-icon bg-gmail">✉️</div><div class="app-name">Gmail</div></div>
+      </div>
+
+      <div class="folder-title">🛠️ Алатки и Систем</div>
+      <div class="app-grid">
+        <div class="app-item" onclick="otvoriAplikacija('googlechrome://')"><div class="app-icon bg-chrome">🌐</div><div class="app-name">Chrome</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('content://media/internal/images/media')"><div class="app-icon bg-gal">🖼️</div><div class="app-name">Галерија</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('voicerecorder://')"><div class="app-icon bg-dict">🎙️</div><div class="app-name">Диктафон</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('sms://')"><div class="app-icon bg-msg">💬</div><div class="app-name">Пораки</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('market://')"><div class="app-icon bg-store">🛍️</div><div class="app-name">Play Store</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('googletranslate://')"><div class="app-icon bg-trans">🔤</div><div class="app-name">Преведувач</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('adblocker://')"><div class="app-icon bg-block">🛡️</div><div class="app-name">Блокатор</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('googleapp://')"><div class="app-icon bg-web">🌍</div><div class="app-name">Web страна</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('plus://')"><div class="app-icon bg-plus">➕</div><div class="app-name">Додај</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('authenticator://')"><div class="app-icon bg-auth">🔐</div><div class="app-name">Auth</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('intent://#Intent;package=com.itsaky.androidide;end')"><div class="app-icon bg-aide">💻</div><div class="app-name">A-IDE</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('intent://#Intent;package=com.termux;end')"><div class="app-icon bg-term">📟</div><div class="app-name">Termux</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('github://')"><div class="app-icon bg-git">🐙</div><div class="app-name">GitHub</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('clock://')"><div class="app-icon bg-clock">⏰</div><div class="app-name">Часовник</div></div>
+      </div>
+
+    </div>
+
+    <div id="tab-ai" class="tab-content">
+      <div class="section-title">AI Копилот</div>
+      <div class="chat-container">
+        <div class="chat-history" id="chatArea">
+          <div class="msg bot">Здраво газда! Системот е подготвен.</div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Прашај нешто...">
+          <button onclick="pratiPoraka()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="qrModal" class="modal">
+    <div class="modal-content">
+      <h2 style="color:var(--primary); margin-bottom:10px; font-size:18px;">Пренос на системот</h2>
+      <div id="qrcode" style="display: flex; justify-content: center; margin: 15px auto; background: #fff; padding: 10px; border-radius: 8px; width: 180px; height: 180px;"></div>
+      <button onclick="zatvoriQR()" style="background: var(--primary); padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; width: 100%; color: #000;">Затвори</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('types', this)"><div class="nav-icon">⚽</div><span class="nav-text">Типови</span></div>
+    <div class="nav-item" onclick="switchTab('news', this); vcituvajVesti();"><div class="nav-icon">📰</div><span class="nav-text">Вести</span></div>
+    <div class="nav-item" onclick="switchTab('social', this)"><div class="nav-icon">📱</div><span class="nav-text">Мрежи</span></div>
+    <div class="nav-item" onclick="switchTab('ai', this)"><div class="nav-icon">🤖</div><span class="nav-text">Копилот</span></div>
+  </div>
+
   <script>
-    function jeDecimalen(tokenRaw) {
-      return /^\d+[.,]\d+$/.test(tokenRaw);
+    function switchTab(tabName, navElement) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      navElement.classList.add('active');
     }
-    function parsirajBilten(tekst) {
-      const linii = tekst.split('\n');
-      const mecevi = [];
-      for (const linijaRaw of linii) {
-        const linija = linijaRaw.trim();
-        if (!linija) continue;
-        const tokeni = linija.split(/\s+/);
-        if (tokeni.length < 7) continue;
-        const den = tokeni[0];
-        const vreme = tokeni[1];
-        const sifra = tokeni[2];
-        let decIdx = -1;
-        for (let i = 3; i < tokeni.length; i++) {
-          if (jeDecimalen(tokeni[i])) { decIdx = i; break; }
-        }
-        if (decIdx === -1 || decIdx + 2 >= tokeni.length) continue;
-        if (!jeDecimalen(tokeni[decIdx]) || !jeDecimalen(tokeni[decIdx + 1]) || !jeDecimalen(tokeni[decIdx + 2])) continue;
-        const k1 = parseFloat(tokeni[decIdx].replace(',', '.'));
-        const kx = parseFloat(tokeni[decIdx + 1].replace(',', '.'));
-        const k2 = parseFloat(tokeni[decIdx + 2].replace(',', '.'));
-        if (isNaN(k1) || isNaN(kx) || isNaN(k2)) continue;
-        const domakin = tokeni.slice(3, decIdx).join(' ').trim();
-        if (!domakin) continue;
-        const gostiTokeni = [];
-        let i = decIdx + 3;
-        while (i < tokeni.length && !jeDecimalen(tokeni[i])) {
-          gostiTokeni.push(tokeni[i]);
-          i++;
-        }
-        const gosti = gostiTokeni.join(' ').trim();
-        if (!gosti) continue;
-        mecevi.push({ den, vreme, sifra, domakin, gosti, k1, kx, k2 });
-      }
-      return mecevi;
+
+    let vnesenPin = ""; const TAEN_KOD = "1234"; 
+    function vnesiBroj(broj) { if(vnesenPin.length < 4) { vnesenPin += broj; document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length) + "○".repeat(4 - vnesenPin.length); } }
+    function izbrisiBroj() { vnesenPin = vnesenPin.slice(0, -1); document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length) + "○".repeat(4 - vnesenPin.length); }
+    function proveriKod() { if(vnesenPin === TAEN_KOD) { document.getElementById('lockScreen').style.display = 'none'; } else { alert("ГАЗДА, ПОГРЕШЕН КОД!"); vnesenPin = ""; document.getElementById('pinDisplay').innerText = "○○○○"; } }
+    
+    function otvoriVoBrowser(url) { window.open(url, '_system'); setTimeout(() => { window.open(url, '_blank'); }, 500); }
+    function otvoriQR() {
+        document.getElementById('qrModal').style.display = 'flex';
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = ''; 
+        const podatociZaPrenos = JSON.stringify({ pin: TAEN_KOD, verzija: "1.0", blokator: "vklucen" });
+        new QRCode(qrContainer, { text: podatociZaPrenos, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
     }
+    function zatvoriQR() { document.getElementById('qrModal').style.display = 'none'; }
+    function otvoriAplikacija(appLink) { window.location.href = appLink; }
+
+    function switchNews(type, element) {
+        document.getElementById('btn-news-f1').classList.remove('active');
+        document.getElementById('btn-news-rm').classList.remove('active');
+        document.getElementById('news-f1-container').style.display = 'none';
+        document.getElementById('news-rm-container').style.display = 'none';
+        element.classList.add('active');
+        document.getElementById('news-' + type + '-container').style.display = 'block';
+    }
+
+    async function vcituvajVesti() {
+        const f1Container = document.getElementById('newsF1');
+        const rmContainer = document.getElementById('newsRM');
+        f1Container.innerHTML = '<p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p>';
+        rmContainer.innerHTML = '<p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p>';
+        try {
+            const f1Res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.autosport.com/rss/f1/news/'));
+            const rmRes = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://e00-marca.uecdn.es/rss/futbol/real-madrid.xml'));
+            const f1Data = await f1Res.json(); 
+            const rmData = await rmRes.json(); 
+            if(f1Data.items) {
+                let f1Html = '';
+                f1Data.items.slice(0, 15).forEach(item => { f1Html += `<div class="news-item" onclick="window.open('${item.link}', '_blank')">🏎️ ${item.title}</div>`; });
+                f1Container.innerHTML = f1Html;
+            }
+            if(rmData.items) {
+                let rmHtml = '';
+                rmData.items.slice(0, 15).forEach(item => { rmHtml += `<div class="news-item" onclick="window.open('${item.link}', '_blank')">⚽ ${item.title}</div>`; });
+                rmContainer.innerHTML = rmHtml;
+            }
+        } catch(e) { 
+            f1Container.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
+            rmContainer.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
+        }
+    }
+
+    function parsirajSportLife(tekst) {
+        const mecevi = [];
+        const linii = tekst.split('\n');
+        let tekovnaLiga = "Непозната Лига";
+        let tekovenSport = "Фудбал";
+        
+        for (let i = 0; i < linii.length; i++) {
+            const linija = linii[i].trim();
+            
+            if (linija.match(/Кошарка|Basketball/i)) tekovenSport = "Кошарка";
+            else if (linija.match(/Ракомет|Handball/i)) tekovenSport = "Ракомет";
+            else if (linija.match(/Тенис|Tennis/i)) tekovenSport = "Тенис";
+            else if (linija.match(/Хокеј|Hockey/i)) tekovenSport = "Хокеј";
+
+            if (linija.match(/^[A-Za-zА-Ша-ш\s\.]+$/i) && (linija.includes("England") || linija.includes("Spain") || linija.includes("Italy") || linija.includes("Germany") || linija.includes("France") || linija.includes("UEFA") || linija.includes("League"))) {
+                tekovnaLiga = linija;
+            }
+
+            const mecMatch = linija.match(/(.+?)\s*:\s*(.+)/);
+            if (mecMatch) {
+                const domakin = mecMatch[1].trim();
+                const gosti = mecMatch[2].trim();
+                let vreme = linii[i+1] ? linii[i+1].trim() : "";
+                let sifra = linii[i+2] ? linii[i+2].trim() : "";
+                
+                let blok = "";
+                for(let j=i; j<i+60 && j<linii.length; j++) { blok += linii[j] + " "; }
+                
+                const tipMatch = blok.match(/(?:Конечен Тип|Конечен исход)\s*([\d.]+)(?:\s*X([\d.]+))?\s*([\d.]+)/);
+                
+                if(tipMatch) {
+                    const k1 = parseFloat(tipMatch[1]);
+                    const kx = tipMatch[2] ? parseFloat(tipMatch[2]) : 0; 
+                    const k2 = parseFloat(tipMatch[3]);
+                    
+                    let gg = 0, ng = 0, tg2plus = 0;
+                    const ggMatch = blok.match(/ГГ([\d.]+)\s*НГ([\d.]+)/);
+                    if(ggMatch) { gg = parseFloat(ggMatch[1]); ng = parseFloat(ggMatch[2]); }
+                    
+                    const tgMatch = blok.match(/0-1 гол([\d.]+)\s*2\+([\d.]+)/);
+                    if(tgMatch) { tg2plus = parseFloat(tgMatch[2]); }
+                    
+                    mecevi.push({ 
+                        sport: tekovenSport, liga: tekovnaLiga, domakin, gosti, vreme, sifra, k1, kx, k2, gg, ng, tg2plus
+                    });
+                }
+            }
+        }
+        return mecevi;
+    }
+
     function presmetajProcenti(k1, kx, k2) {
-      const p1 = 1 / k1; const pX = 1 / kx; const p2 = 1 / k2;
-      const vkupno = p1 + pX + p2;
-      return { p1: (p1 / vkupno) * 100, pX: (pX / vkupno) * 100, p2: (p2 / vkupno) * 100, marza: (vkupno - 1) * 100 };
+        if(k1 === 0 || k2 === 0) return { p1: 0, pX: 0, p2: 0 };
+        const p1 = 1 / k1, p2 = 1 / k2;
+        let pX = 0;
+        let vkupno = p1 + p2;
+        if (kx > 0) { pX = 1 / kx; vkupno += pX; }
+        return { p1: (p1 / vkupno) * 100, pX: pX ? (pX / vkupno) * 100 : 0, p2: (p2 / vkupno) * 100 };
     }
-    function najdiPredlog(p1, pX, p2) {
-      if (p1 >= pX && p1 >= p2) return '1';
-      if (pX >= p1 && pX >= p2) return 'X';
-      return '2';
-    }
-    function objasnenie(mec, predlog, procenti) {
-      const { domakin, gosti, k1, kx, k2 } = mec;
-      const nazivIshod = { '1': domakin, 'X': 'нерешено', '2': gosti };
-      const procentPredlog = { '1': procenti.p1, 'X': procenti.pX, '2': procenti.p2 }[predlog];
-      return `Коефициентите (${k1} / ${kx} / ${k2}) сугерираат дека пазарот го гледа исходот "${predlog}" (${nazivIshod[predlog]}) како најверојатен, со проценета веројатност од ${procentPredlog.toFixed(1)}% откако е отстранета маржата на букмејкерот (вкупна маржа: ${procenti.marza.toFixed(1)}%). Ова е чисто статистичко читање на коефициентите, не гарантирана прогноза.`;
-    }
-    function prikaziRezultati(mecevi) {
-      const kontejner = document.getElementById('rezultati');
-      kontejner.innerHTML = '';
-      if (mecevi.length === 0) {
-        kontejner.innerHTML = '<p class="nema-mecevi">Не се пронајдени мечеви. Провери го форматот на билтенот.</p>';
-        return;
-      }
-      mecevi.forEach((mec, index) => {
-        const procenti = presmetajProcenti(mec.k1, mec.kx, mec.k2);
-        const predlog = najdiPredlog(procenti.p1, procenti.pX, procenti.p2);
-        const div = document.createElement('div');
-        div.className = 'mec';
-        div.innerHTML = `
-          <div class="mec-naslov">
-            <span>${mec.den} ${mec.vreme} [${mec.sifra}] — ${mec.domakin} vs ${mec.gosti}</span>
-            <span class="predlog">Предлог: ${predlog}</span>
-          </div>
-          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="1" data-opis="${mec.domakin}"><span>1 (${mec.domakin})</span></div><span class="procent">${procenti.p1.toFixed(1)}%</span></div>
-          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="X" data-opis="нерешено"><span>X (нерешено)</span></div><span class="procent">${procenti.pX.toFixed(1)}%</span></div>
-          <div class="ishod"><div class="ishod-info"><input type="checkbox" class="chk-tiket" data-mec="${index}" data-ishod="2" data-opis="${mec.gosti}"><span>2 (${mec.gosti})</span></div><span class="procent">${procenti.p2.toFixed(1)}%</span></div>
-          <button class="btn-obrazlozenie" data-index="${index}">Образложение</button>
-          <div class="obrazlozenie" id="obr-${index}">${objasnenie(mec, predlog, procenti)}</div>
-        `;
-        kontejner.appendChild(div);
-      });
-      document.querySelectorAll('.btn-obrazlozenie').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const target = document.getElementById('obr-' + btn.dataset.index);
-          target.classList.toggle('vidlivo');
-        });
-      });
-    }
+
     document.getElementById('btnAnaliziraj').addEventListener('click', () => {
-      const tekst = document.getElementById('vnesBilten').value;
-      const mecevi = parsirajBilten(tekst);
-      prikaziRezultati(mecevi);
+        const mecevi = parsirajSportLife(document.getElementById('vnesBilten').value);
+        const kontejner = document.getElementById('rezultati'); kontejner.innerHTML = '';
+        
+        if(mecevi.length === 0) { 
+            kontejner.innerHTML = '<p style="color:var(--danger); text-align:center;">Не се пронајдени мечеви. Провери го текстот.</p>'; 
+            return; 
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Шифра</th>
+                            <th>Време</th>
+                            <th style="text-align:left;">Меч</th>
+                            <th>1</th>
+                            <th>X</th>
+                            <th>2</th>
+                            <th>ГГ</th>
+                            <th>2+</th>
+                            <th>Предлог</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        mecevi.forEach((mec) => {
+            const proc = presmetajProcenti(mec.k1, mec.kx, mec.k2);
+            let maxP = Math.max(proc.p1, proc.pX, proc.p2);
+            let predlog = maxP === proc.p1 ? '1' : (maxP === proc.pX ? 'X' : '2');
+            let tipText = predlog === '1' ? 'ТИП 1' : (predlog === 'X' ? 'ТИП X' : 'ТИП 2');
+
+            tableHTML += `
+                <tr>
+                    <td class="code-col">${mec.sifra}</td>
+                    <td class="time-col">${mec.vreme}</td>
+                    <td class="team-col">${mec.domakin} - ${mec.gosti}</td>
+                    <td>
+                        <span class="odds-val">${mec.k1 > 0 ? mec.k1 : '-'}</span>
+                        <span class="prob-val">${proc.p1 > 0 ? proc.p1.toFixed(0) + '%' : ''}</span>
+                    </td>
+                    <td>
+                        <span class="odds-val">${mec.kx > 0 ? mec.kx : '-'}</span>
+                        <span class="prob-val">${proc.pX > 0 ? proc.pX.toFixed(0) + '%' : ''}</span>
+                    </td>
+                    <td>
+                        <span class="odds-val">${mec.k2 > 0 ? mec.k2 : '-'}</span>
+                        <span class="prob-val">${proc.p2 > 0 ? proc.p2.toFixed(0) + '%' : ''}</span>
+                    </td>
+                    <td class="odds-val">${mec.gg > 0 ? mec.gg : '-'}</td>
+                    <td class="odds-val">${mec.tg2plus > 0 ? mec.tg2plus : '-'}</td>
+                    <td><span class="excel-tip">${tipText}</span></td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `</tbody></table></div>`;
+        kontejner.innerHTML = tableHTML;
     });
+
+    const API_URL = "https://zlatko-api.zlatkomarina0.workers.dev";
+    const SYSTEM_PROMPT = `Ти си Zlatko AI Mode. Зборувај македонски, директно и кратко.`;
+
+    async function pratiPoraka() {
+        const input = document.getElementById('chatInput');
+        const tekst = input.value.trim(); if(tekst === '') return;
+        const chatArea = document.getElementById('chatArea');
+        
+        chatArea.innerHTML += `<div class="msg user">${tekst}</div>`;
+        input.value = ''; chatArea.scrollTop = chatArea.scrollHeight;
+        const loadingMsg = document.createElement('div'); loadingMsg.className = 'msg bot'; loadingMsg.innerText = "Пишува...";
+        chatArea.appendChild(loadingMsg); chatArea.scrollTop = chatArea.scrollHeight;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\n" + tekst }] }] })
+            });
+            const data = await response.json();
+            chatArea.removeChild(loadingMsg);
+            if(data.candidates) { chatArea.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text}</div>`; } 
+            else { throw new Error("Нема одговор."); }
+        } catch (error) {
+            chatArea.removeChild(loadingMsg);
+            chatArea.innerHTML += `<div class="msg bot" style="background:var(--danger); color:#fff;">Грешка во врската.</div>`;
+        }
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
   </script>
 </body>
-</html>
+</html>4

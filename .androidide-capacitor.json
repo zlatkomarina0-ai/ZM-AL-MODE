@@ -4,7 +4,7 @@
   "buildScript": "build",
   "webDir": "dist",
   "capacitorVersion": "8.5.0",
-  "syncState": "FAILED",
-  "sourceStamp": -7246638463706242731,
-  "updatedAt": 1793442490042
+  "syncState": "SYNCED",
+  "sourceStamp": 8061548504530471162,
+  "updatedAt": 1794797802216
 }

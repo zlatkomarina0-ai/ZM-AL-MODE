@@ -36,6 +36,15 @@
     </application>
 
     <!-- Permissions -->
-
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Queries -->
+    <queries>
+        <package android:name="com.termux" />
+        <package android:name="com.itsaky.androidide" />
+        <package android:name="com.facebook.katana" />
+        <package android:name="com.viber.voip" />
+        <package android:name="com.instagram.android" />
+    </queries>
+
 </manifest>
