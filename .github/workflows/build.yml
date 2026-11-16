@@ -33,8 +33,11 @@ jobs:
     - name: Sync Capacitor
       run: npx cap sync android
 
-    - name: Fix Gradle Java Path (GitHub compatibility)
-      run: sed -i '/org.gradle.java.home/d' android/gradle.properties
+    - name: Clean Gradle Properties (Force Remove Local Paths)
+      run: |
+        echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" > android/gradle.properties
+        echo "android.useAndroidX=true" >> android/gradle.properties
+        echo "android.enableJetifier=true" >> android/gradle.properties
 
     - name: Build APK
       run: |
