@@ -11,7 +11,7 @@
     body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
     #lockScreen { position: fixed; inset: 0; background: linear-gradient(145deg, #0a0f1c 0%, #131c31 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    #pinDisplay { font-size: 32px; letter-spacing: 12px; margin-bottom: 40px; color: var(--primary); font-weight: bold; }
+    #pinDisplay { font-size: 32px; letter-spacing: 12px; margin-bottom: 40px; color: var(--primary); font-weight: bold; height: 40px;}
     .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 280px; }
     .keypad button { background: rgba(30, 42, 71, 0.6); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); font-size: 26px; font-weight: 500; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
     .keypad button:active { background: var(--primary); color: var(--bg-body); transform: scale(0.95); }
@@ -38,7 +38,6 @@
     td { padding: 10px 5px; border: 1px solid var(--border); white-space: nowrap; }
     tr:nth-child(even) { background-color: var(--bg-surface); }
     tr:nth-child(odd) { background-color: var(--bg-body); }
-    tr:active { background-color: #1e3a8a; }
     
     .team-col { text-align: left; font-weight: 600; min-width: 140px; }
     .time-col { color: var(--text-muted); font-size: 11px; }
@@ -82,7 +81,7 @@
 <body>
 
   <div id="lockScreen">
-    <div id="pinDisplay">○○○○</div>
+    <div id="pinDisplay"></div>
     <div class="keypad">
       <button onclick="vnesiBroj(1)">1</button><button onclick="vnesiBroj(2)">2</button><button onclick="vnesiBroj(3)">3</button>
       <button onclick="vnesiBroj(4)">4</button><button onclick="vnesiBroj(5)">5</button><button onclick="vnesiBroj(6)">6</button>
@@ -113,7 +112,6 @@
 
     <div id="tab-news" class="tab-content">
       <div class="section-title">Вести во живо</div>
-      
       <div class="news-switch">
         <div class="news-btn active" id="btn-news-f1" onclick="switchNews('f1', this)">
           <span style="font-size:24px;">🏎️</span> ФОРМУЛА 1
@@ -122,18 +120,15 @@
           <span style="font-size:24px;">⚽</span> РЕАЛ МАДРИД
         </div>
       </div>
-
       <div id="news-f1-container" class="news-container" style="display: block;">
         <div id="newsF1"><p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p></div>
       </div>
-
       <div id="news-rm-container" class="news-container" style="display: none;">
         <div id="newsRM"><p style="padding:15px; color:var(--text-muted); text-align:center;">Се вчитуваат...</p></div>
       </div>
     </div>
 
     <div id="tab-social" class="tab-content">
-      
       <div class="folder-title">📱 Социјални мрежи</div>
       <div class="app-grid" style="margin-bottom: 20px;">
         <div class="app-item" onclick="otvoriAplikacija('fb://')"><div class="app-icon bg-fb">📘</div><div class="app-name">Facebook</div></div>
@@ -150,7 +145,7 @@
 
       <div class="folder-title">🏦 Финансии и Документи</div>
       <div class="app-grid" style="margin-bottom: 20px;">
-        <div class="app-item" onclick="window.location.href='https://www.stb.com.mk/'"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB Банка</div></div>
+        <div class="app-item" onclick="otvoriAplikacija('https://www.stb.com.mk/')"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB Банка</div></div>
         <div class="app-item" onclick="window.location.href='https://myddv.ujp.gov.mk/'"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
         <div class="app-item" onclick="otvoriAplikacija('googledrive://')"><div class="app-icon bg-drive">📁</div><div class="app-name">Мои датотеки</div></div>
         <div class="app-item" onclick="otvoriAplikacija('content://com.android.calendar/time')"><div class="app-icon bg-cal">📅</div><div class="app-name">Календар</div></div>
@@ -174,28 +169,19 @@
         <div class="app-item" onclick="otvoriAplikacija('github://')"><div class="app-icon bg-git">🐙</div><div class="app-name">GitHub</div></div>
         <div class="app-item" onclick="otvoriAplikacija('clock://')"><div class="app-icon bg-clock">⏰</div><div class="app-name">Часовник</div></div>
       </div>
-
     </div>
 
     <div id="tab-ai" class="tab-content">
       <div class="section-title">AI Копилот</div>
       <div class="chat-container">
         <div class="chat-history" id="chatArea">
-          <div class="msg bot">Здраво газда! Системот е подготвен.</div>
+          <div class="msg bot">Здраво газда! Системот е подготвен и херметички затворен.</div>
         </div>
         <div class="chat-input">
           <input type="text" id="chatInput" placeholder="Прашај нешто...">
           <button onclick="pratiPoraka()">➤</button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div id="qrModal" class="modal">
-    <div class="modal-content">
-      <h2 style="color:var(--primary); margin-bottom:10px; font-size:18px;">Пренос на системот</h2>
-      <div id="qrcode" style="display: flex; justify-content: center; margin: 15px auto; background: #fff; padding: 10px; border-radius: 8px; width: 180px; height: 180px;"></div>
-      <button onclick="zatvoriQR()" style="background: var(--primary); padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; width: 100%; color: #000;">Затвори</button>
     </div>
   </div>
 
@@ -214,21 +200,29 @@
       navElement.classList.add('active');
     }
 
-    let vnesenPin = ""; const TAEN_KOD = "1234"; 
-    function vnesiBroj(broj) { if(vnesenPin.length < 4) { vnesenPin += broj; document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length) + "○".repeat(4 - vnesenPin.length); } }
-    function izbrisiBroj() { vnesenPin = vnesenPin.slice(0, -1); document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length) + "○".repeat(4 - vnesenPin.length); }
-    function proveriKod() { if(vnesenPin === TAEN_KOD) { document.getElementById('lockScreen').style.display = 'none'; } else { alert("ГАЗДА, ПОГРЕШЕН КОД!"); vnesenPin = ""; document.getElementById('pinDisplay').innerText = "○○○○"; } }
+    let vnesenPin = ""; 
+    const TAEN_KOD = "21031983"; 
+    function vnesiBroj(broj) { 
+        if(vnesenPin.length < TAEN_KOD.length) { 
+            vnesenPin += broj; 
+            document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length); 
+        } 
+    }
+    function izbrisiBroj() { 
+        vnesenPin = vnesenPin.slice(0, -1); 
+        document.getElementById('pinDisplay').innerText = "●".repeat(vnesenPin.length); 
+    }
+    function proveriKod() { 
+        if(vnesenPin === TAEN_KOD) { 
+            document.getElementById('lockScreen').style.display = 'none'; 
+        } else { 
+            alert("ГАЗДА, ПОГРЕШЕН КОД!"); 
+            vnesenPin = ""; 
+            document.getElementById('pinDisplay').innerText = ""; 
+        } 
+    }
     
     function otvoriVoBrowser(url) { window.open(url, '_system'); setTimeout(() => { window.open(url, '_blank'); }, 500); }
-    function otvoriQR() {
-        document.getElementById('qrModal').style.display = 'flex';
-        const qrContainer = document.getElementById('qrcode');
-        qrContainer.innerHTML = ''; 
-        const podatociZaPrenos = JSON.stringify({ pin: TAEN_KOD, verzija: "1.0", blokator: "vklucen" });
-        new QRCode(qrContainer, { text: podatociZaPrenos, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
-    }
-    function zatvoriQR() { document.getElementById('qrModal').style.display = 'none'; }
-    function otvoriAplikacija(appLink) { window.location.href = appLink; }
 
     function switchNews(type, element) {
         document.getElementById('btn-news-f1').classList.remove('active');
@@ -262,6 +256,22 @@
         } catch(e) { 
             f1Container.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
             rmContainer.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
+        }
+    }
+
+    function otvoriAplikacija(appLink) {
+        if (appLink.includes('stb.com.mk')) {
+            let vnesenKod = prompt("🔒 ВНЕСИ ГО ТАЈНИОТ КОД ЗА БАНКА:");
+            if (vnesenKod !== "21031983") {
+                alert("⛔ ПОГРЕШЕН КОД! ПРИСТАПОТ Е БЛОКИРАН.");
+                return;
+            }
+        }
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppLauncher) {
+            const { AppLauncher } = window.Capacitor.Plugins;
+            AppLauncher.openUrl({ url: appLink }).catch(e => { window.location.href = appLink; });
+        } else {
+            window.location.href = appLink;
         }
     }
 
@@ -307,9 +317,7 @@
                     const tgMatch = blok.match(/0-1 гол([\d.]+)\s*2\+([\d.]+)/);
                     if(tgMatch) { tg2plus = parseFloat(tgMatch[2]); }
                     
-                    mecevi.push({ 
-                        sport: tekovenSport, liga: tekovnaLiga, domakin, gosti, vreme, sifra, k1, kx, k2, gg, ng, tg2plus
-                    });
+                    mecevi.push({ sport: tekovenSport, liga: tekovnaLiga, domakin, gosti, vreme, sifra, k1, kx, k2, gg, ng, tg2plus });
                 }
             }
         }
@@ -387,8 +395,8 @@
         kontejner.innerHTML = tableHTML;
     });
 
-    const API_URL = "https://zlatko-api.zlatkomarina0.workers.dev";
-    const SYSTEM_PROMPT = `Ти си Zlatko AI Mode. Зборувај македонски, директно и кратко.`;
+    const GEMINI_API_KEY = "AQ.Ab8RN6IGuDC-_DJY3X9bBV0y1rx1rfw7EPLvx9WT23lfk2GZ6A"; 
+    const SYSTEM_PROMPT = `Ти си Zlatko AI Mode. Зборувај македонски, директно и кратко. Секогаш кога ќе се вклучиш, започни со: „Здраво газда! Системот е подготвен и херметички затворен.“`;
 
     async function pratiPoraka() {
         const input = document.getElementById('chatInput');
@@ -401,21 +409,26 @@
         chatArea.appendChild(loadingMsg); chatArea.scrollTop = chatArea.scrollHeight;
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\n" + tekst }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nГаздата прашува: " + tekst }] }] })
             });
             const data = await response.json();
             chatArea.removeChild(loadingMsg);
-            if(data.candidates) { chatArea.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text}</div>`; } 
-            else { throw new Error("Нема одговор."); }
+            if(data.candidates) { 
+                chatArea.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text}</div>`; 
+            } else if (data.error) { 
+                throw new Error(data.error.message); 
+            } else { 
+                throw new Error("Нема одговор."); 
+            }
         } catch (error) {
             chatArea.removeChild(loadingMsg);
-            chatArea.innerHTML += `<div class="msg bot" style="background:var(--danger); color:#fff;">Грешка во врската.</div>`;
+            chatArea.innerHTML += `<div class="msg bot" style="background:var(--danger); color:#fff;">Грешка: ${error.message}</div>`;
         }
         chatArea.scrollTop = chatArea.scrollHeight;
     }
   </script>
 </body>
-</html>4
+</html>
