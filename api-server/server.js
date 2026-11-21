@@ -3,6 +3,7 @@
  * Provider API keys are environment variables and must never be shipped to clients.
  */
 import { createServer } from "node:http";
+import { runPluton } from "./pluton.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const MAX_MESSAGE_CHARS = 12000;
@@ -97,6 +98,37 @@ const server = createServer(async (req, res) => {
       configuredProviders: getProviders().map((provider) => provider.id),
     }, cors);
   }
+  if (req.method === "POST" && url.pathname === "/api/pluton") {
+    if (!origin || !cors["Access-Control-Allow-Origin"]) {
+      return send(res, 403, { error: "Origin not allowed" }, cors);
+    }
+
+    let raw = "";
+    try {
+      for await (const chunk of req) {
+        raw += chunk;
+        if (raw.length > 20000) return send(res, 413, { error: "Request body too large" }, cors);
+      }
+    } catch {
+      return send(res, 400, { error: "Could not read request body" }, cors);
+    }
+
+    let payload;
+    try { payload = JSON.parse(raw); }
+    catch { return send(res, 400, { error: "Request body must be valid JSON" }, cors); }
+
+    try {
+      const result = runPluton(payload);
+      return send(res, result.ok === false ? 400 : 200, result, cors);
+    } catch (error) {
+      return send(res, 400, {
+        error: error instanceof Error ? error.message : "Invalid PLUTON input",
+        engine: "PLUTON",
+        networkCalls: 0,
+      }, cors);
+    }
+  }
+
   if (req.method !== "POST" || url.pathname !== "/api/ai") {
     return send(res, 404, { error: "Not found" }, cors);
   }
