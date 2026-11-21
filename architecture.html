@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="mk">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZLATKO AI MODE — Архитектура</title>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#101e33;--line:#24476b;--gold:#fbbf24;--muted:#a7b7cc;--green:#22c55e}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#06101e,#0d1b31);color:#f8fafc;font:15px system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:18px}header{padding:20px 0 14px;border-bottom:1px solid var(--line);margin-bottom:18px}h1{color:var(--gold);font-size:clamp(25px,4vw,40px);margin:0}h2{font-size:18px;margin:0 0 12px}p{line-height:1.5}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:14px 0}.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px;margin-bottom:13px}.stat strong{display:block;color:var(--gold);font-size:29px;margin:5px 0}.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px}.step{background:#091525;border:1px solid var(--line);border-radius:10px;padding:12px}.step b{display:block;margin-bottom:5px;color:#e5f0ff}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}input,select,button{font:inherit;border-radius:8px;padding:11px;border:1px solid var(--line)}input,select{background:#07111f;color:white;min-width:0}button{cursor:pointer;font-weight:700;background:var(--gold);color:#101827;border:0}.secondary{background:#153455;color:white;border:1px solid var(--line)}.list{display:grid;gap:7px;margin-top:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#07111f;border:1px solid var(--line);border-radius:8px;overflow-wrap:anywhere}.row span{min-width:0}.row button{padding:7px 9px}.tag{font-size:11px;color:#fde68a;border:1px solid #854d0e;border-radius:20px;padding:3px 7px}.notice{border-left:3px solid var(--gold);padding:8px 12px;background:#171f2b;color:#dbeafe;font-size:13px}a{color:#93c5fd}
+</style></head>
+<body><main>
+<header><p class="muted">ОПЕРАТИВНА АРХИТЕКТУРА · ПЛАНСКА ВЕРЗИЈА</p><h1>ZLATKO AI MODE</h1><p>Спортски податоци → оперативни AI-тимови → проверка → гласање → Парламент</p><a href="/">← Назад кон главната апликација</a></header>
+<div class="grid">
+<div class="card stat"><span class="muted">Спортски записи (план)</span><strong>≈300</strong><span class="muted">натпреварувања, мечеви и екипи — не AI-тимови</span></div>
+<div class="card stat"><span class="muted">Оперативни AI-тимови</span><strong>1.000</strong><span class="muted">тимови што ги обработуваат спортските податоци</span></div>
+<div class="card stat"><span class="muted">Работници по план</span><strong>120.000</strong><span class="muted">3 групи × 40 × 1.000 тимови</span></div>
+<div class="card stat"><span class="muted">AI-шефови</span><strong>1.000</strong><span class="muted">еден шеф по оперативен тим</span></div>
+</div>
+<section class="card"><h2>Работен тек на еден оперативен тим</h2><div class="flow">
+<div class="step"><b>1 · Следење сигнали — 40</b><span class="muted">Следење промени и нови информации.</span></div>
+<div class="step"><b>2 · Собирање податоци — 40</b><span class="muted">Статистика, натпревари и екипи.</span></div>
+<div class="step"><b>3 · Проверка и анализа — 40</b><span class="muted">Споредување извори, проверка на грешки и анализа.</span></div>
+<div class="step"><b>4 · Седница на AI-шефот</b><span class="muted">Обединување на резултатите и подготовка на предлог.</span></div>
+<div class="step"><b>5 · Гласање</b><span class="muted">1.000 гласачи × 0,1% = 100%, ако сите гласови се валидни.</span></div>
+<div class="step"><b>6 · Парламент и централен систем</b><span class="muted">Одлуката и финалниот извештај се враќаат во ZLATKO AI MODE.</span></div>
+</div></section>
+<section class="card"><h2>Регистар на провајдери</h2><p class="muted">Провајдер е компанија или платформа што нуди AI-услуги. Внесените ставки се плански записи, не доказ дека API е поврзан.</p>
+<form id="providerForm" class="form"><input id="providerName" required maxlength="80" placeholder="Име на провајдер"><input id="providerNote" maxlength="120" placeholder="Белешка / статус"><button>+ Додај провајдер</button></form><div id="providers" class="list"></div></section>
+<section class="card"><h2>Регистар на AI-модели</h2><p class="muted">Моделите се одделни од провајдерите. Внеси го точното име на моделот според официјалната документација.</p>
+<form id="modelForm" class="form"><select id="modelProvider" required><option value="">Избери провајдер</option></select><input id="modelName" required maxlength="100" placeholder="Точно име на AI-модел"><input id="modelRole" maxlength="120" placeholder="Улога: анализа, проверка..."><button>+ Додај модел</button></form><div id="models" class="list"></div>
+<div class="grid"><button type="button" id="export" class="secondary">Извези JSON</button><button type="button" id="reset" class="secondary">Избриши локален регистар</button></div><p id="status" class="muted" aria-live="polite">Регистарот се чува локално во овој прелистувач.</p></section>
+<p class="notice">Важно: ова е прва функционална контролна табла и локален регистар. Не се стартувани 1.000 тимови или 121.000 автономни агенти; за тоа се потребни backend, API-пристапи, оркестрација, лимити, логови и мониторинг.</p>
+</main>
+<script>
+const KEY='zlatko-ai-registry-v1';let data;
+try{data=JSON.parse(localStorage.getItem(KEY)||'{"providers":[],"models":[]}')}catch{data={providers:[],models:[]}}
+if(!Array.isArray(data.providers)||!Array.isArray(data.models))data={providers:[],models:[]};
+const $=id=>document.getElementById(id);
+const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const id=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+function save(msg){localStorage.setItem(KEY,JSON.stringify(data));render();$('status').textContent=msg||'Зачувано локално.'}
+function render(){
+ $('providers').innerHTML=data.providers.length?data.providers.map(p=>'<div class="row"><span><b>'+safe(p.name)+'</b><br><small class="muted">'+safe(p.note||'Без белешка')+'</small></span><button type="button" class="secondary" data-del-provider="'+p.id+'">Избриши</button></div>').join(''):'<p class="muted">Нема внесени провајдери.</p>';
+ $('modelProvider').innerHTML='<option value="">Избери провајдер</option>'+data.providers.map(p=>'<option value="'+p.id+'">'+safe(p.name)+'</option>').join('');
+ $('models').innerHTML=data.models.length?data.models.map(m=>{const p=data.providers.find(x=>x.id===m.providerId);return '<div class="row"><span><b>'+safe(m.name)+'</b><br><small class="muted">'+safe(p?p.name:'Неповрзан провајдер')+' · '+safe(m.role||'Улога не е внесена')+'</small></span><button type="button" class="secondary" data-del-model="'+m.id+'">Избриши</button></div>'}).join(''):'<p class="muted">Нема внесени модели.</p>';
+}
+$('providerForm').addEventListener('submit',e=>{e.preventDefault();const name=$('providerName').value.trim(),note=$('providerNote').value.trim();if(data.providers.some(p=>p.name.toLowerCase()===name.toLowerCase())){$('status').textContent='Овој провајдер веќе е внесен.';return}data.providers.push({id:id(),name,note});e.target.reset();save('Провајдерот е додаден локално.')});
+$('modelForm').addEventListener('submit',e=>{e.preventDefault();const providerId=$('modelProvider').value,name=$('modelName').value.trim(),role=$('modelRole').value.trim();if(data.models.some(m=>m.providerId===providerId&&m.name.toLowerCase()===name.toLowerCase())){$('status').textContent='Овој модел веќе е внесен кај тој провајдер.';return}data.models.push({id:id(),providerId,name,role});e.target.reset();save('Моделот е додаден локално.')});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.delProvider){data.providers=data.providers.filter(p=>p.id!==b.dataset.delProvider);data.models=data.models.filter(m=>m.providerId!==b.dataset.delProvider);save('Провајдерот и неговите модели се отстранети.')}if(b.dataset.delModel){data.models=data.models.filter(m=>m.id!==b.dataset.delModel);save('Моделот е отстранет.')}});
+$('export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({schemaVersion:1,exportedAt:new Date().toISOString(),...data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='zlatko-ai-registry.json';a.click();URL.revokeObjectURL(url);$('status').textContent='JSON-извозот е подготвен.'});
+$('reset').addEventListener('click',()=>{if(confirm('Да се избришат сите локални записи?')){data={providers:[],models:[]};save('Локалниот регистар е испразнет.')}});
+render();
+</script></body></html>
