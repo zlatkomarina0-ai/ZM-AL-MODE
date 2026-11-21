@@ -16,8 +16,16 @@ function normalize(value) {
   return String(value).trim().replace(/\s+/g, " ");
 }
 
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]));
+  }
+  return value;
+}
+
 function stableKey(value) {
-  if (value && typeof value === "object") return JSON.stringify(value, Object.keys(value).sort());
+  if (value && typeof value === "object") return JSON.stringify(canonicalize(value));
   return String(value);
 }
 
