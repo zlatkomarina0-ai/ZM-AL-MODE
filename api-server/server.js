@@ -11,6 +11,19 @@ const ALLOWED_ORIGINS = new Set(
     .split(",").map((origin) => origin.trim()).filter(Boolean),
 );
 
+const PROVIDER_CONFIG = [
+  { id: "openai", keyName: "OPENAI_API_KEY", modelName: "OPENAI_MODEL", model: "gpt-4o-mini", endpoint: "https://api.openai.com/v1/chat/completions" },
+  { id: "claude", keyName: "ANTHROPIC_API_KEY", modelName: "ANTHROPIC_MODEL", model: "claude-3-5-haiku-latest", style: "anthropic", endpoint: "https://api.anthropic.com/v1/messages" },
+  { id: "deepseek", keyName: "DEEPSEEK_API_KEY", modelName: "DEEPSEEK_MODEL", model: "deepseek-chat", endpoint: "https://api.deepseek.com/chat/completions" },
+  { id: "gemini", keyName: "GEMINI_API_KEY", modelName: "GEMINI_MODEL", model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" },
+  { id: "groq", keyName: "GROQ_API_KEY", modelName: "GROQ_MODEL", model: "llama-3.3-70b-versatile", endpoint: "https://api.groq.com/openai/v1/chat/completions" },
+  { id: "mistral", keyName: "MISTRAL_API_KEY", modelName: "MISTRAL_MODEL", model: "mistral-small-latest", endpoint: "https://api.mistral.ai/v1/chat/completions" },
+  { id: "xai", keyName: "XAI_API_KEY", modelName: "XAI_MODEL", model: "grok-3-mini", endpoint: "https://api.x.ai/v1/chat/completions" },
+  { id: "openrouter", keyName: "OPENROUTER_API_KEY", modelName: "OPENROUTER_MODEL", model: "openai/gpt-4o-mini", endpoint: "https://openrouter.ai/api/v1/chat/completions" },
+  { id: "cerebras", keyName: "CEREBRAS_API_KEY", modelName: "CEREBRAS_MODEL", model: "llama-3.3-70b", endpoint: "https://api.cerebras.ai/v1/chat/completions" },
+  { id: "together", keyName: "TOGETHER_API_KEY", modelName: "TOGETHER_MODEL", model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", endpoint: "https://api.together.xyz/v1/chat/completions" },
+];
+
 function send(res, status, data, headers = {}) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", ...headers });
   res.end(JSON.stringify(data));
@@ -29,13 +42,13 @@ function getCors(req) {
 }
 
 function getProviders(requested) {
-  const available = [
-    { id: "openai", key: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL || "gpt-4o-mini" },
-    { id: "claude", key: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest" },
-    { id: "deepseek", key: process.env.DEEPSEEK_API_KEY, model: process.env.DEEPSEEK_MODEL || "deepseek-chat" },
-  ].filter((provider) => Boolean(provider.key));
+  const available = PROVIDER_CONFIG.map((config) => ({
+    ...config,
+    key: process.env[config.keyName],
+    model: process.env[config.modelName] || config.model,
+  })).filter((provider) => Boolean(provider.key));
   if (!Array.isArray(requested) || requested.length === 0) return available;
-  const selected = new Set(requested.filter((id) => ["openai", "claude", "deepseek"].includes(id)));
+  const selected = new Set(requested.filter((id) => PROVIDER_CONFIG.some((provider) => provider.id === id)));
   return available.filter((provider) => selected.has(provider.id));
 }
 
@@ -47,25 +60,22 @@ async function callProvider(provider, message, context) {
     context ? "Additional task context:\n" + context : "",
   ].filter(Boolean).join("\n\n");
 
-  let endpoint;
   let headers;
   let body;
-  if (provider.id === "claude") {
-    endpoint = "https://api.anthropic.com/v1/messages";
+  if (provider.style === "anthropic") {
     headers = { "x-api-key": provider.key, "anthropic-version": "2023-06-01", "content-type": "application/json" };
     body = { model: provider.model, max_tokens: 1200, system, messages: [{ role: "user", content: message }] };
   } else {
-    endpoint = provider.id === "deepseek" ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
     headers = { Authorization: "Bearer " + provider.key, "Content-Type": "application/json" };
     body = { model: provider.model, max_tokens: 1200, messages: [{ role: "system", content: system }, { role: "user", content: message }] };
   }
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(provider.endpoint, {
     method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(45000),
   });
   if (!response.ok) throw new Error(provider.id + " provider returned HTTP " + response.status);
   const data = await response.json();
-  const content = provider.id === "claude"
+  const content = provider.style === "anthropic"
     ? (data.content || []).filter((part) => part.type === "text").map((part) => part.text).join("\n").trim()
     : data.choices?.[0]?.message?.content?.trim();
   if (!content) throw new Error(provider.id + " returned an empty response");
@@ -84,11 +94,7 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/health") {
     return send(res, 200, {
       ok: true, service: "zlatko-api",
-      configuredProviders: [
-        process.env.OPENAI_API_KEY ? "openai" : null,
-        process.env.ANTHROPIC_API_KEY ? "claude" : null,
-        process.env.DEEPSEEK_API_KEY ? "deepseek" : null,
-      ].filter(Boolean),
+      configuredProviders: getProviders().map((provider) => provider.id),
     }, cors);
   }
   if (req.method !== "POST" || url.pathname !== "/api/ai") {
