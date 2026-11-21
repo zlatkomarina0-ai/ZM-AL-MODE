@@ -1,9 +1,15 @@
 name: Deploy Cloudflare Worker
+
 on:
   push:
+    branches: [ "main" ]
     paths:
-      - 'cloudflare-worker/**'
+      - "cloudflare-worker/**"
+      - ".github/workflows/deploy-worker.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -16,5 +22,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: 'cloudflare-worker'
+          workingDirectory: "cloudflare-worker"
           command: deploy worker.js --name zlatko-api --compatibility-date 2024-01-01
