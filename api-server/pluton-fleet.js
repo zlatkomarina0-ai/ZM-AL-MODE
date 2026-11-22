@@ -1,7 +1,8 @@
 /**
  * PLUTON — local-only code fleet.
  * No provider SDKs, API keys, network requests, or paid inference.
- * Each of 1,000 agent profiles can select from 30 deterministic local code modules.
+ * Registers 1,000 chief profiles; 30 deterministic local code modules are shared across them.
+ * This is separate from Ace of Clubs’ 2,000,000 logical worker units per profile.
  * Modules are shared implementations to conserve storage; execution is on demand.
  */
 
