@@ -1,22 +1,36 @@
-cat > /storage/internal_new/project/ZLATKOALMODE/.github/workflows/deploy-worker.yml << 'EOF'
-name: Deploy Cloudflare Worker
-on:
-  push:
-    paths:
-      - 'cloudflare-worker/**'
-  workflow_dispatch:
+/**
+ * Minimal Cloudflare Worker health endpoint for ZLATKO AI MODE.
+ * PLUTON processing remains in the client and this Worker does not call AI APIs.
+ * No secrets, provider APIs, or external network requests are used here.
+ */
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' },
+  });
+}
 
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: 'cloudflare-worker'
-          command: deploy worker.js --name zlatko-api --compatibility-date 2024-01-01
-EOF
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
+    const url = new URL(request.url);
+    if (request.method !== 'GET') return json({ ok: false, error: 'Method not allowed' }, 405);
+    if (url.pathname === '/' || url.pathname === '/health') {
+      return json({
+        ok: true,
+        system: 'ZLATKO AI MODE',
+        component: 'PLUTON CODE ♠',
+        mode: 'local-first',
+        apiCalls: false,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return json({ ok: false, error: 'Not found' }, 404);
+  },
+};
