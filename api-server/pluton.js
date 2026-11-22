@@ -6,6 +6,7 @@ import { runPlutonFleet, PLUTON_CODE_IDS } from "./pluton-fleet.js";
 import { runZamka } from "./zamka.js";
 import { runKaro } from "./karo.js";
 import { runArsenal } from "./arsenal.js";
+import { getZlatkoArchitecture } from "./zlatko-architecture.js";
 
 const MAX_ITEMS = 5000;
 const MAX_TEXT = 12000;
@@ -39,6 +40,8 @@ export function runPluton(payload = {}) {
   const data = payload.data;
 
   switch (operation) {
+    case "architecture":
+      return getZlatkoArchitecture();
     case "health":
       return { ok: true, engine: "PLUTON", mode: "local-only", networkCalls: 0 };
 
