@@ -41,6 +41,8 @@ export function parseSportLifeText(text) {
       league = line;
     }
 
+    // Clock lines such as 18:00 are not team-vs-team records.
+    if (/^\d{1,2}:\d{2}$/.test(line)) continue;
     const match = line.match(/(.+?)\s*:\s*(.+)/);
     if (!match) continue;
 
