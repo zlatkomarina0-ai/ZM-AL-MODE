@@ -55,7 +55,7 @@ test('parses raw SportLife text without treating kickoff times as matches', () =
     'Конечен Тип 1.8 X3.2 4.2',
     'ГГ1.7 НГ2.0',
     '0-1 гол2.2 2+1.5',
-  ].join('\\n');
+  ].join('\n');
   const matches = parseSportLifeText(raw);
   assert.equal(matches.length, 1);
   assert.equal(matches[0].homeTeam, 'Arsenal');
