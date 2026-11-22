@@ -8,7 +8,7 @@
 const MAX_AGENTS = 100;
 const CODES_PER_AGENT = 30;
 const MAX_TASKS = 5000;
-const cleanText = (value) => String(value ?? "").trim().replace(/\\s+/g, " ");
+const cleanText = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
 const stable = (value) => JSON.stringify(canonical(value));
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
