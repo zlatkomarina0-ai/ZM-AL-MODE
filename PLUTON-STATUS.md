@@ -2,9 +2,10 @@
 
 ## Current implementation
 - PLUTON is added as a fifth tab in the existing app; the original Types/News/Social/Copilot screens are preserved.
-- Imports JSON match arrays or objects with a `matches` array; the UI also offers the existing local SportLife parser.
+- Imports JSON match arrays or objects with a `matches` array, CSV files (including AppSheet/Sheets exports with `homeTeam`/`awayTeam` or `domakin`/`gosti` headers), and the existing local SportLife parser.
 - Round-robin assignment to 100, 400, or 1,000 logical chief labels.
-- Local validation queue, bounded retry (maximum three attempts per task), task history, JSON report and CSV export for manual Google Sheets/AppSheet import.
+- Duplicate match imports are skipped using match ID plus normalized home/away team names, including duplicates within the same imported bulletin.
+- Local validation queue, bounded retry (maximum three attempts per task), task history, JSON report and expanded CSV export for manual Google Sheets/AppSheet import. CSV includes a stable UUID `ID`, match/team columns, status, attempts, validation/errors, source metadata, normalized team names, and timestamps.
 - No external AI provider requests are made by PLUTON. No API key is required for this local mode.
 - Browser storage is local to the current browser/device. It is not a shared server database.
 
