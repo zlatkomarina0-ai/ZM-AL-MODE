@@ -23,5 +23,7 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
+      - name: Scheduled PLUTON unit tests
+        run: npm run test:pluton
       - name: TypeScript and Vite build
         run: npm run build
