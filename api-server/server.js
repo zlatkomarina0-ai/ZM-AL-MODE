@@ -1,12 +1,11 @@
 /**
- * ZLATKO AI MODE — portable Node.js API server (Render / Railway / similar)
- * Provider API keys are environment variables and must never be shipped to clients.
+ * ZLATKO AI MODE — local-only PLUTON server.
+ * No external AI provider configuration or fallback is permitted.
  */
 import { createServer } from "node:http";
 import { runPluton } from "./pluton.js";
 
 const PORT = Number(process.env.PORT || 8787);
-const MAX_MESSAGE_CHARS = 12000;
 const ALLOWED_ORIGINS = new Set(
   (process.env.ALLOWED_ORIGINS || "https://zlatkomarina0-ai.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,capacitor://localhost,ionic://localhost")
     .split(",").map((origin) => origin.trim()).filter(Boolean),
