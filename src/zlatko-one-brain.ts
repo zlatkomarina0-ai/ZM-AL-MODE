@@ -19,6 +19,7 @@ import {
   type ZlatkoAgentResult,
   type OrchestratorOptions,
   type ZlatkoModelAdapter,
+  type ZlatkoAgentProviderProfile,
   type ExternalCallApproval,
 } from './zlatko-computer-orchestrator';
 
@@ -43,6 +44,11 @@ export class ZlatkoOneBrain {
 
   registerModel(adapter: ZlatkoModelAdapter): void {
     this.computer.registerModel(adapter);
+  }
+
+  /** Bind one agent to up to 30 registered models owned by its provider. */
+  registerAgentProvider(profile: ZlatkoAgentProviderProfile): void {
+    this.computer.registerAgentProvider(profile);
   }
 
   startCase(input: StartCaseInput): BrainCaseSnapshot {
@@ -94,7 +100,7 @@ export class ZlatkoOneBrain {
         ...current.investigation,
         notes: [
           ...current.investigation.notes,
-          `Computer orchestrator finished: ${report.summary.completed} completed, ${report.summary.failed} failed, ${report.summary.skipped} skipped; ${report.configuredModels}/30 model slots configured.`,
+          `Computer orchestrator finished: ${report.summary.completed} completed, ${report.summary.failed} failed, ${report.summary.skipped} skipped; ${report.configuredModels} adapters and ${report.configuredAgentProfiles}/100 agent-provider profiles configured.`,
         ],
       },
     });
@@ -119,8 +125,10 @@ export class ZlatkoOneBrain {
     teams: 3;
     roles: 12;
     agentSlots: 100;
-    modelSlots: 30;
+    modelSlotsPerAgent: 30;
+    maxAgentModelAssignments: 3000;
     configuredModels: number;
+    configuredAgentProfiles: number;
     mode: 'local-first';
     externalCallsRequireOneTimeApproval: true;
   } {
@@ -129,8 +137,10 @@ export class ZlatkoOneBrain {
       teams: 3,
       roles: 12,
       agentSlots: 100,
-      modelSlots: 30,
+      modelSlotsPerAgent: 30,
+      maxAgentModelAssignments: 3000,
       configuredModels: this.computer.getConfiguredModelIds().length,
+      configuredAgentProfiles: this.computer.getConfiguredAgentProfileCount(),
       mode: 'local-first',
       externalCallsRequireOneTimeApproval: true,
     };
