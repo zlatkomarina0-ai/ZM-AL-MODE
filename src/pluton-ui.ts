@@ -55,6 +55,10 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     .pluton-shell .pluton-status.queued { color:#f7d88a; background:#3a2d17; }
     .pluton-shell .pluton-status.failed { color:#ffaaaa; background:#43202a; }
     .pluton-shell .pluton-small { color:#8297ad; font-size:10px; line-height:1.5; }
+    .pluton-shell .joker2-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+    .pluton-shell .joker2-band { background:#101e30; border:1px solid #35435b; border-radius:10px; padding:10px; }
+    .pluton-shell .joker2-band strong { display:block; font-size:15px; margin:4px 0; }
+    .pluton-shell .joker2-band span { color:#9fb0c5; font-size:10px; }
     @media (max-width:380px) { .pluton-shell .pluton-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .pluton-shell .pluton-stat strong { font-size:19px; } }
   `;
   document.head.appendChild(style);
@@ -101,8 +105,29 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
         <p id="pluton-engine-message" class="pluton-message" role="status"></p>
         <p class="pluton-small">Локалното зачувување е во овој прелистувач и не се синхронизира автоматски со друг телефон, GitHub или AppSheet. CSV-извозот е мост за рачен увоз, не автоматска конекција.</p>
       </section>
+      <section class="pluton-card" id="pluton-joker2">
+        <h3>JOKER 2 ♣ — паралелна линија за коефициенти</h3>
+        <p class="pluton-intro">Посебна линија покрај главната. Анализира ги коефициентите од внесениот билтен и ги групира во пет опсези. Бројките за работници се планирани логички капацитети, не активни компјутери.</p>
+        <div class="pluton-stats">
+          <div class="pluton-stat"><span>Планирани работници</span><strong id="joker2-workers">2.5M</strong></div>
+          <div class="pluton-stat"><span>Прочитани коефициенти</span><strong id="joker2-total">0</strong></div>
+          <div class="pluton-stat"><span>Надвор од опсезите</span><strong id="joker2-excluded">0</strong></div>
+          <div class="pluton-stat"><span>Извори по работник</span><strong>1,000</strong></div>
+        </div>
+        <div class="joker2-grid">
+          ${JOKER2_BANDS.map(band => '<div class="joker2-band"><span>Опсег ' + band.label + '</span><strong id="joker2-count-' + band.id + '">0 коефициенти</strong><span>' + band.plannedWorkers.toLocaleString('en-US') + ' планирани работници</span></div>').join('')}
+        </div>
+        <p class="pluton-small">Граници без преклопување: 5 влегува во 5–10; 10 во 10–20; 20 во 20–30; 30 останува во 20–30; само вредности поголеми од 30 влегуваат во „над 30“.</p>
+        <div class="pluton-actions">
+          <button id="joker2-scan" class="pluton-btn primary">Скенирај внесени коефициенти</button>
+          <button id="joker2-export" class="pluton-btn">Извези JOKER 2 CSV</button>
+        </div>
+        <p id="joker2-message" class="pluton-message" role="status"></p>
+        <div class="pluton-table-wrap"><table><thead><tr><th>Меч</th><th>Пазар</th><th>Коефициент</th><th>Опсег</th></tr></thead><tbody id="joker2-rows"><tr><td colspan="4">Увези билтен, па скенирај.</td></tr></tbody></table></div>
+        <p class="pluton-small">Наследена опрема од линијата AS KARO: PLUTON CODE ♠, 1.000 веб-извори по работник како проектна цел и заедничка цел од 200 милиони компјутери. Нема реални веб-пребарувања или AI API повици во оваа верзија.</p>
+      </section>
       <section class="pluton-card">
-        <h3>3. Последни задачи</h3>
+        <h3>4. Последни задачи</h3>
         <div class="pluton-table-wrap"><table><thead><tr><th>Натпревар</th><th>Шеф</th><th>Статус</th><th>Резултат</th></tr></thead><tbody id="pluton-rows"><tr><td colspan="4">Нема задачи.</td></tr></tbody></table></div>
       </section>
     </div>
@@ -135,6 +160,7 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
   const fileInput = document.getElementById('pluton-file') as HTMLInputElement;
   const format = document.getElementById('pluton-format') as HTMLSelectElement;
   const chiefs = document.getElementById('pluton-chiefs') as HTMLSelectElement;
+  let joker2Rows: ReturnType<typeof scanMatchCoefficients> = [];
 
   function escapeHtml(value: unknown): string {
     return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -325,5 +351,37 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     message('pluton-engine-message', 'CSV е извезен за рачен увоз во Google Sheets/AppSheet. Автоматска синхронизација не е активна.');
   });
 
+
+  document.getElementById('joker2-scan')!.addEventListener('click', () => {
+    const tasks = getPlutonState().tasks;
+    const matches = tasks.map(task => task.payload);
+    joker2Rows = scanMatchCoefficients(matches);
+    const counts = countJoker2Bands(joker2Rows);
+    for (const band of JOKER2_BANDS) {
+      const node = document.getElementById('joker2-count-' + band.id);
+      if (node) node.textContent = String(counts[band.id] ?? 0) + ' коефициенти';
+    }
+    document.getElementById('joker2-total')!.textContent = String(joker2Rows.length);
+    const allNumeric = matches.reduce((sum, match) => {
+      const odds = match.odds;
+      return sum + (typeof odds === 'object' && odds !== null && !Array.isArray(odds)
+        ? Object.values(odds as Record<string, unknown>).filter(value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value))).length
+        : 0);
+    }, 0);
+    document.getElementById('joker2-excluded')!.textContent = String(Math.max(0, allNumeric - joker2Rows.length));
+    document.getElementById('joker2-rows')!.innerHTML = joker2Rows.length
+      ? joker2Rows.slice(0, 250).map(row => '<tr><td>' + escapeHtml(row.matchId) + '<div class="pluton-small">' + escapeHtml(row.homeTeam) + ' — ' + escapeHtml(row.awayTeam) + '</div></td><td>' + escapeHtml(row.market) + '</td><td>' + escapeHtml(row.coefficient) + '</td><td>' + escapeHtml(row.bandLabel) + '</td></tr>').join('')
+      : '<tr><td colspan="4">Нема коефициенти од 2 или повеќе во внесените задачи.</td></tr>';
+    message('joker2-message', 'JOKER 2: анализирани ' + joker2Rows.length + ' коефициенти во пет опсези. Ова е локална класификација, не прогноза.');
+  });
+
+  document.getElementById('joker2-export')!.addEventListener('click', () => {
+    const columns = ['matchId', 'homeTeam', 'awayTeam', 'market', 'coefficient', 'bandId', 'bandLabel'];
+    const rows = joker2Rows.map(row => columns.map(column => csvCell(row[column as keyof typeof row])).join(','));
+    download('zlatko-joker2-coefficients-' + new Date().toISOString().slice(0, 10) + '.csv', [columns.join(','), ...rows].join('\\r\\n'), 'text/csv;charset=utf-8');
+    message('joker2-message', 'JOKER 2 CSV извезен: ' + joker2Rows.length + ' редови.');
+  });
+
+  document.getElementById('joker2-workers')!.textContent = JOKER2_TOTAL_PLANNED_WORKERS.toLocaleString('en-US');
   render();
 }
