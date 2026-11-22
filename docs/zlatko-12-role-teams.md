@@ -17,7 +17,7 @@ Elephant, Bear, Turtle, Human, Computer.
 - Turtle represents slower, careful processing.
 - Human is the human intelligence/judgment layer: sets goals, interprets context, supervises the AI agent, reviews evidence, and approves consequential decisions.
 - Computer is the central AI agent layer, strengthened by a coordinated fleet of 100 AI agents using 30 models. The intended design distributes subtasks, runs parallel analysis, compares model outputs, consolidates findings, and returns a structured report to Human.
-- The current code describes this architecture; it does not yet instantiate or orchestrate 100 live agents or 30 model integrations.
+- `src/zlatko-computer-orchestrator.ts` now provides the Computer-layer coordinator scaffold: 100 agent slots, 30 model slots, task fan-out, bounded parallel execution, capability matching, result aggregation, and per-call approval gating for external APIs. It executes only adapters that are explicitly registered.
 
 ## Team 3 — Continuous information intake
 Leech maintains a persistent, permissioned information feed about the team and match and marks interruptions/data gaps.
@@ -30,4 +30,4 @@ Leech maintains a persistent, permissioned information feed about the team and m
 - `finalizeInvestigation` requires evidence and a reviewer identity.
 
 ## Current limits
-This is a typed workflow/state-transition module, not a live autonomous agent fleet. It does not collect live sports data, connect to external AI providers, execute surveillance, or make a real-world accusation. Those capabilities require explicit authorized integrations, persistence, access control, and tests. No external provider is called by this module.
+The 100 agents and 30 models are capacity slots, not 100 live processes or 30 connected providers. The coordinator has no provider adapters registered by default, makes no external API calls on its own, and does not collect live sports data. Real providers, authorized data feeds, persistent job storage, authentication, audit logging, and automated tests still need to be integrated. External calls must receive a separate one-time approval through the configured approval gate. Suspicious signals and model outputs are leads for human review, not proof or final decisions.
