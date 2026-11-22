@@ -44,3 +44,33 @@ test("unsupported operations do not fall back to an API", () => {
   assert.equal(result.ok, false);
   assert.equal(result.networkCalls, 0);
 });
+
+test("PLUTON fleet runs local code tasks without network calls", () => {
+  const result = runPluton({
+    operation: "fleet",
+    tasks: [
+      { id: "dedupe", agentId: "pluton-agent-001", codeId: "code-02-deduplicate", data: ["a", "b", "a"] },
+      { id: "audit", agentId: "pluton-agent-100", codeId: "code-29-dataset-audit", data: [1, 1, null] },
+    ],
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.agentCapacity, 100);
+  assert.equal(result.codesPerAgent, 30);
+  assert.equal(result.maxAgentCodeAssignments, 3000);
+  assert.equal(result.registeredLocalCodes, 30);
+  assert.equal(result.networkCalls, 0);
+  assert.deepEqual(result.results[0].result, ["a", "b"]);
+  assert.equal(result.results[1].result.duplicateCount, 1);
+  assert.ok(result.results.every((item) => item.networkCalls === 0));
+});
+
+test("PLUTON fleet rejects unknown agents and code IDs", () => {
+  assert.throws(() => runPluton({ operation: "fleet", tasks: [{ agentId: "agent-999", codeId: "code-30-health", data: null }] }), /Unknown PLUTON agent/);
+  assert.throws(() => runPluton({ operation: "fleet", tasks: [{ agentId: "pluton-agent-001", codeId: "api-call", data: null }] }), /Unknown PLUTON code/);
+});
+
+test("PLUTON code catalog lists exactly 30 local code modules", () => {
+  const result = runPluton({ operation: "listCodes" });
+  assert.equal(result.networkCalls, 0);
+  assert.equal(result.codes.length, 30);
+});
