@@ -22,8 +22,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </div>
         <div class="brain-actions">
           <button id="start-case" class="btn-run">① Започни тест-случај</button>
-          <button id="submit-evidence" disabled>② Предај докази</button>
-          <button id="process-case" disabled>③ Обработи</button>
+          <button id="record-scout" disabled>② Fox + Wolf проверка</button>
+          <button id="submit-evidence" disabled>③ Предај докази</button>
+          <button id="process-case" disabled>④ Обработи</button>
         </div>
         <p id="case-state" role="status">Нема активен случај.</p>
         <pre id="brain-log" aria-live="polite">Чекам команда.</pre>
@@ -55,7 +56,8 @@ function log(value: unknown): void {
 
 function refreshButtons(): void {
   const snapshot = activeCaseId ? brain.getCase(activeCaseId) : null;
-  document.getElementById('submit-evidence')!.toggleAttribute('disabled', !snapshot || snapshot.investigation.stage === 'processing' || snapshot.investigation.stage === 'finalized');
+  document.getElementById('record-scout')!.toggleAttribute('disabled', !snapshot || snapshot.investigation.stage !== 'scouting');
+  document.getElementById('submit-evidence')!.toggleAttribute('disabled', !snapshot || snapshot.investigation.stage !== 'joint-investigation');
   document.getElementById('process-case')!.toggleAttribute('disabled', !snapshot || snapshot.investigation.stage !== 'processing');
   document.getElementById('case-state')!.textContent = snapshot
     ? `Случај: ${snapshot.investigation.caseId} · Фаза: ${snapshot.investigation.stage}`
@@ -72,6 +74,20 @@ document.getElementById('start-case')!.addEventListener('click', () => {
     });
     activeCaseId = caseId;
     log({ message: 'Случајот е отворен во локалната меморија.', snapshot, system: brain.getSystemStatus() });
+    refreshButtons();
+  } catch (error) {
+    log({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+document.getElementById('record-scout')!.addEventListener('click', () => {
+  if (!activeCaseId) return;
+  try {
+    const snapshot = brain.recordScoutFindings(activeCaseId, [
+      'DEMO: Rabbit scout проверил примерни податоци; не е реално сомневање.',
+      'DEMO: Fox и Wolf треба независно да ги споредат изворите пред обработка.',
+    ]);
+    log({ message: 'Здружената проверка е започната. Сигналите остануваат траги, не доказ за вина.', snapshot });
     refreshButtons();
   } catch (error) {
     log({ error: error instanceof Error ? error.message : String(error) });

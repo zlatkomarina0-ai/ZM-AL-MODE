@@ -7,7 +7,7 @@
  * securely by a backend, rate-limit handling, and runtime monitoring.
  */
 
-import type { CentralMatch, MatchTask, OperationalTeam } from './zlatko-central';
+import type { CentralMatch, OperationalTeam } from './zlatko-central';
 import { createCentralRun } from './zlatko-central';
 import type { FederationRegistry, AgentRecord, ModelRecord, ProviderRecord } from './provider-federation';
 import { getEnabledRoutingCatalog } from './provider-federation';
@@ -30,7 +30,6 @@ export type BrainRoutingPlan = {
 };
 
 function selectAgentForTask(
-  task: MatchTask,
   agents: AgentRecord[],
   models: ModelRecord[],
   providers: ProviderRecord[],
@@ -82,7 +81,6 @@ export function createZlatkoBrainRoutingPlan(input: {
 
   for (const task of centralRun.tasks) {
     const selected = selectAgentForTask(
-      task,
       catalog.agents,
       catalog.models,
       catalog.providers,
