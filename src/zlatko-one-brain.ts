@@ -19,6 +19,7 @@ import {
   type ZlatkoAgentResult,
   type OrchestratorOptions,
   type ZlatkoModelAdapter,
+  type ExternalCallApproval,
 } from './zlatko-computer-orchestrator';
 
 export interface StartCaseInput {
