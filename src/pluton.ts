@@ -140,7 +140,14 @@ export function importBulletin(input: string, chiefCount = 400): { imported: num
 
   const state = readState();
   const room = MAX_TASKS - state.tasks.length;
-  if (records.length > room) throw new Error(`Only ${room} task slots remain; this import contains ${records.length} records.`);
+  const knownMatches = new Set<string>();
+  for (const task of state.tasks) {
+    const payload = task.payload;
+    const matchId = typeof payload.matchId === 'string' ? payload.matchId.trim().toLocaleLowerCase() : '';
+    const home = typeof payload.homeTeam === 'string' ? normalizeTeamName(payload.homeTeam) : '';
+    const away = typeof payload.awayTeam === 'string' ? normalizeTeamName(payload.awayTeam) : '';
+    if (matchId && home && away) knownMatches.add(`${matchId}|${home}|${away}`);
+  }
 
   let imported = 0;
   let skipped = 0;
@@ -161,12 +168,20 @@ export function importBulletin(input: string, chiefCount = 400): { imported: num
     const matchId = typeof record.matchId === 'string' && record.matchId.trim()
       ? record.matchId.trim()
       : `MATCH-${String(index + 1).padStart(4, '0')}`;
+    const homeTeam = record.homeTeam.trim();
+    const awayTeam = record.awayTeam.trim();
+    const dedupeKey = `${matchId.toLocaleLowerCase()}|${normalizeTeamName(homeTeam)}|${normalizeTeamName(awayTeam)}`;
+    if (knownMatches.has(dedupeKey)) {
+      skipped += 1;
+      return;
+    }
+    knownMatches.add(dedupeKey);
     const chiefNumber = (index % chiefCount) + 1;
     newTasks.push({
       id: makeId(),
-      title: `${matchId}: ${record.homeTeam.trim()} — ${record.awayTeam.trim()}`,
+      title: `${matchId}: ${homeTeam} — ${awayTeam}`,
       kind: 'validate_match',
-      payload: { ...record, matchId, homeTeam: record.homeTeam.trim(), awayTeam: record.awayTeam.trim() },
+      payload: { ...record, matchId, homeTeam, awayTeam },
       chiefId: `CHIEF-${String(chiefNumber).padStart(4, '0')}`,
       status: 'queued',
       attempts: 0,
@@ -176,6 +191,9 @@ export function importBulletin(input: string, chiefCount = 400): { imported: num
     imported += 1;
   });
 
+  if (newTasks.length > room) {
+    throw new Error(`Only ${room} task slots remain; this import contains ${newTasks.length} new unique matches.`);
+  }
   state.tasks.push(...newTasks);
   writeState(state);
   return { imported, skipped };
