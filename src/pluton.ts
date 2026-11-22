@@ -29,6 +29,7 @@ export interface PlutonState {
 const STORAGE_KEY = 'zlatko.pluton.state.v1';
 const MAX_TASKS = 10000;
 const MAX_TEXT_LENGTH = 100000;
+const MAX_ATTEMPTS = 3;
 
 function now(): string {
   return new Date().toISOString();
@@ -165,7 +166,7 @@ export function importBulletin(input: string, chiefCount = 400): { imported: num
       id: makeId(),
       title: `${matchId}: ${record.homeTeam.trim()} — ${record.awayTeam.trim()}`,
       kind: 'validate_match',
-      payload: { matchId, homeTeam: record.homeTeam.trim(), awayTeam: record.awayTeam.trim() },
+      payload: { ...record, matchId, homeTeam: record.homeTeam.trim(), awayTeam: record.awayTeam.trim() },
       chiefId: `CHIEF-${String(chiefNumber).padStart(4, '0')}`,
       status: 'queued',
       attempts: 0,
@@ -214,7 +215,7 @@ export function retryFailedTasks(): number {
   const state = readState();
   let retried = 0;
   for (const task of state.tasks) {
-    if (task.status === 'failed') {
+    if (task.status === 'failed' && task.attempts < MAX_ATTEMPTS) {
       task.status = 'queued';
       task.error = undefined;
       task.updatedAt = now();
