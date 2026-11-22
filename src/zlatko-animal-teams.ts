@@ -88,12 +88,12 @@ export const ZLATKO_ROLES: Record<ZlatkoRoleId, ZlatkoRole> = {
   },
   human: {
     id: 'human', name: 'Човек', teamId: 'team-2-processing',
-    responsibilities: ['Human role in the information-processing team; detailed permissions and actions are configured by the system owner'],
+    responsibilities: ['Human intelligence and judgment layer: defines goals, interprets context, supervises the AI agent, reviews evidence, and approves consequential decisions'],
     worksWith: ['elephant', 'bear', 'turtle', 'computer'],
   },
   computer: {
     id: 'computer', name: 'Компјутер', teamId: 'team-2-processing',
-    responsibilities: ['Computer role in the information-processing team; concrete tools and actions are configured by the system owner'],
+    responsibilities: ['The central AI agent/computer layer, strengthened by a coordinated fleet of 100 AI agents and their 30 models', 'Distributes subtasks, runs parallel analysis, compares model outputs, consolidates results, and returns a structured report to the human layer'],
     worksWith: ['elephant', 'bear', 'turtle', 'human'],
   },
   leech: {
