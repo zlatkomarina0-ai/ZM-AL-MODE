@@ -373,16 +373,47 @@
 
     async function pratiPoraka() {
         const input = document.getElementById('chatInput');
-        const tekst = input.value.trim(); if(tekst === '') return;
+        const tekst = input.value.trim();
+        if (!tekst) return;
         const chatArea = document.getElementById('chatArea');
-        
-        chatArea.innerHTML += `<div class="msg user">${tekst}</div>`;
-        input.value = ''; chatArea.scrollTop = chatArea.scrollHeight;
-        
-        setTimeout(() => {
-            chatArea.innerHTML += `<div class="msg bot">Газда, ова е тест верзија. AI-от ќе биде поврзан кога ќе имаме вистинска серверска поддршка.</div>`;
+        const userMessage = document.createElement('div');
+        userMessage.className = 'msg user';
+        userMessage.textContent = tekst;
+        chatArea.appendChild(userMessage);
+        input.value = '';
+        input.disabled = true;
+
+        const reply = document.createElement('div');
+        reply.className = 'msg bot';
+        chatArea.appendChild(reply);
+        const apiBase = String(window.ZLATKO_API_URL || '').trim().replace(/\/$/, '');
+        if (!apiBase) {
+            reply.textContent = 'Газда, AI серверот сè уште не е поврзан. По објавување на Cloudflare Worker, постави ја неговата адреса во window.ZLATKO_API_URL.';
+            input.disabled = false;
             chatArea.scrollTop = chatArea.scrollHeight;
-        }, 1000);
+            return;
+        }
+        reply.textContent = 'Ги повикувам достапните AI агенти...';
+        chatArea.scrollTop = chatArea.scrollHeight;
+        try {
+            const response = await fetch(apiBase + '/api/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: tekst })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+            const lines = [];
+            (data.replies || []).forEach(item => lines.push('[' + (item.provider || item.agentId || 'AI') + ']\n' + (item.content || 'Нема одговор.')));
+            (data.failures || []).forEach(item => lines.push('[' + (item.agentId || 'AI') + ' — грешка]\n' + (item.error || 'Повикот не успеа.')));
+            reply.textContent = lines.length ? lines.join('\n\n') : 'Серверот не врати одговори од AI агенти.';
+        } catch (error) {
+            reply.textContent = 'Поврзувањето со AI серверот не успеа: ' + (error instanceof Error ? error.message : 'непозната грешка');
+        } finally {
+            input.disabled = false;
+            input.focus();
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
     }
   </script>
 </body>
