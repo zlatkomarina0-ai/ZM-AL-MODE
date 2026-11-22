@@ -1,3 +1,4 @@
+import { DAMA_TREF_MAX_SOURCES, inspectDamaTrefInput, validateDamaTrefSourceUrl } from './pluton-dama-tref';
 import { countJoker2Bands, JOKER2_BANDS, JOKER2_TOTAL_PLANNED_WORKERS, scanMatchCoefficients } from './pluton-joker2';
 import {
   createPikovaProject,
@@ -156,6 +157,22 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
         <p id="pikova-message" class="pluton-message" role="status"></p>
         <p class="pluton-small">Зачувувањето е локално на овој уред/прелистувач. За вистинска безбедност меѓу корисници потребни се серверска автентикација, серверска авторизација и база на податоци; оваа верзија не ги симулира како веќе активни услуги.</p>
         <div class="pluton-table-wrap"><table><thead><tr><th>Задача</th><th>Статус</th><th>Обиди</th><th>Резултат</th></tr></thead><tbody id="pikova-task-rows"><tr><td colspan="4">Избери или креирај проект.</td></tr></tbody></table></div>
+      </section>
+      <section class="pluton-card" id="pluton-dama-tref">
+        <h3>ДАМА ТРЕФ ♣ — влезна безбедносна порта</h3>
+        <span class="pluton-badge">POLICY DEMO · БЕЗ МРЕЖНИ ПОВИЦИ</span>
+        <p class="pluton-intro">Проверува до 1.000 HTTPS адреси според точна листа на дозволени домени и прегледува внесен текст за ризични активни елементи. Оваа контролна табла не презема веб-страници и не е серверски firewall или антивирус.</p>
+        <label for="dama-tref-hosts" class="pluton-small">Дозволени домени (еден hostname по ред, без https://)</label>
+        <textarea id="dama-tref-hosts" spellcheck="false" placeholder="example.com&#10;news.example.org"></textarea>
+        <label for="dama-tref-urls" class="pluton-small">Регистар на извори — до 1.000 HTTPS URL адреси</label>
+        <textarea id="dama-tref-urls" spellcheck="false" placeholder="https://example.com/news"></textarea>
+        <div class="pluton-actions"><button id="dama-tref-check-urls" class="pluton-btn primary">Провери листа на извори</button></div>
+        <label for="dama-tref-input" class="pluton-small">Тест-влез (се обработува како текст, никогаш не се извршува)</label>
+        <select id="dama-tref-content-type"><option value="text/plain">Plain text</option><option value="application/json">JSON</option><option value="text/csv">CSV</option><option value="text/html">HTML — само како податок</option></select>
+        <textarea id="dama-tref-input" spellcheck="false" placeholder="Внеси тест-текст или JSON за проверка..."></textarea>
+        <div class="pluton-actions"><button id="dama-tref-inspect-input" class="pluton-btn">Провери влез</button></div>
+        <p id="dama-tref-message" class="pluton-message" role="status"></p>
+        <p class="pluton-small">Излезната политика е default-deny во библиотеката. Реално блокирање мрежа, безбедно преземање и антивирусно скенирање мора да се спроведат на сервер/изолирана околина; UI проверките сами по себе не ја обезбедуваат таа заштита.</p>
       </section>
       <section class="pluton-card" id="pluton-joker2">
         <h3>JOKER 2 ♣ — паралелна линија за коефициенти</h3>
@@ -576,6 +593,32 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
 
   document.getElementById('pikova-project-count')!.textContent = '0';
   renderPikova();
+
+  document.getElementById('dama-tref-check-urls')!.addEventListener('click', () => {
+    const hostText = (document.getElementById('dama-tref-hosts') as HTMLTextAreaElement).value;
+    const hosts = hostText.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+    const lines = (document.getElementById('dama-tref-urls') as HTMLTextAreaElement).value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+    if (lines.length > DAMA_TREF_MAX_SOURCES) {
+      message('dama-tref-message', 'Надминат е лимитот од ' + DAMA_TREF_MAX_SOURCES + ' извори.', true);
+      return;
+    }
+    let accepted = 0;
+    const rejected: string[] = [];
+    for (const line of lines) {
+      try { validateDamaTrefSourceUrl(line, hosts); accepted += 1; }
+      catch (error) { rejected.push(line + ': ' + (error instanceof Error ? error.message : 'Одбиено')); }
+    }
+    const detail = rejected.slice(0, 5).join(' | ');
+    message('dama-tref-message', 'Проверени: ' + lines.length + '; прифатени според локалната политика: ' + accepted + '; одбиени: ' + rejected.length + '. Ниту една страница не е преземена.' + (detail ? ' Примери: ' + detail : ''), rejected.length > 0);
+  });
+
+  document.getElementById('dama-tref-inspect-input')!.addEventListener('click', () => {
+    const content = (document.getElementById('dama-tref-input') as HTMLTextAreaElement).value;
+    const contentType = (document.getElementById('dama-tref-content-type') as HTMLSelectElement).value;
+    const result = inspectDamaTrefInput({ content, contentType });
+    const details = result.reasons.length ? ' Причини: ' + result.reasons.join(' ') : ' Не се открија ризични шаблони во оваа основна проверка.';
+    message('dama-tref-message', (result.accepted ? 'ВЛЕЗ ПРИФАТЕН ЗА ЛОКАЛНА ПРОВЕРКА' : 'ВЛЕЗ ОДБИЕН / КАРАНТИН') + ' · ' + result.bytes + ' бајти.' + details, !result.accepted);
+  });
 
   document.getElementById('joker2-scan')!.addEventListener('click', () => {
     const tasks = getPlutonState().tasks;
