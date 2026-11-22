@@ -37,7 +37,7 @@ export function runPluton(payload = {}) {
 
   switch (operation) {
     case "health":
-      return { ok: true, engine: "PLUTON", mode: "local-only", networkCalls: 0, agentCapacity: PLUTON_AGENT_COUNT, codesPerAgent: PLUTON_CODES_PER_AGENT, maxAgentCodeAssignments: PLUTON_MAX_AGENT_CODE_ASSIGNMENTS, registeredLocalCodes: PLUTON_CODE_IDS.length };
+      return { ok: true, engine: "PLUTON", mode: "local-only", networkCalls: 0 };
 
     case "listCodes":
       return { ok: true, engine: "PLUTON", mode: "local-only", codes: PLUTON_CODE_IDS, networkCalls: 0 };
