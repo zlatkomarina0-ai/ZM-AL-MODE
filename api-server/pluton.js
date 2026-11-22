@@ -2,7 +2,9 @@
  * PLUTON — local-first deterministic task engine.
  * This module never makes network requests and never calls an AI provider.
  */
-import { runPlutonFleet, PLUTON_CODE_IDS, PLUTON_AGENT_COUNT, PLUTON_CODES_PER_AGENT, PLUTON_MAX_AGENT_CODE_ASSIGNMENTS } from "./pluton-fleet.js";\n\nconst MAX_ITEMS = 5000;
+import { runPlutonFleet, PLUTON_CODE_IDS, PLUTON_AGENT_COUNT, PLUTON_CODES_PER_AGENT, PLUTON_MAX_AGENT_CODE_ASSIGNMENTS } from "./pluton-fleet.js";
+
+const MAX_ITEMS = 5000;
 const MAX_TEXT = 12000;
 
 function requireArray(value, label = "data") {
@@ -35,7 +37,13 @@ export function runPluton(payload = {}) {
 
   switch (operation) {
     case "health":
-      return { ok: true, engine: "PLUTON", mode: "local-only", networkCalls: 0 };
+      return { ok: true, engine: "PLUTON", mode: "local-only", networkCalls: 0, agentCapacity: PLUTON_AGENT_COUNT, codesPerAgent: PLUTON_CODES_PER_AGENT, maxAgentCodeAssignments: PLUTON_MAX_AGENT_CODE_ASSIGNMENTS, registeredLocalCodes: PLUTON_CODE_IDS.length };
+
+    case "listCodes":
+      return { ok: true, engine: "PLUTON", mode: "local-only", codes: PLUTON_CODE_IDS, networkCalls: 0 };
+
+    case "fleet":
+      return runPlutonFleet(payload);
 
     case "normalize":
       if (typeof data === "string") {
