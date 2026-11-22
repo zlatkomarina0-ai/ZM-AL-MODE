@@ -15,7 +15,9 @@ Elephant, Bear, Turtle, Human, Computer.
 
 - Elephant and Bear support high-volume work and back one another up if one stalls.
 - Turtle represents slower, careful processing.
-- Human and Computer are included as distinct roles. Their precise permissions and concrete actions remain configurable rather than being guessed in code.
+- Human is the human intelligence/judgment layer: sets goals, interprets context, supervises the AI agent, reviews evidence, and approves consequential decisions.
+- Computer is the central AI agent layer, strengthened by a coordinated fleet of 100 AI agents using 30 models. The intended design distributes subtasks, runs parallel analysis, compares model outputs, consolidates findings, and returns a structured report to Human.
+- The current code describes this architecture; it does not yet instantiate or orchestrate 100 live agents or 30 model integrations.
 
 ## Team 3 — Continuous information intake
 Leech maintains a persistent, permissioned information feed about the team and match and marks interruptions/data gaps.
