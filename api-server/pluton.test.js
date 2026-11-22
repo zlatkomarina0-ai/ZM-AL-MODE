@@ -99,3 +99,41 @@ test("ZAMKA holds duplicate, missing-ID, and empty-field records", () => {
   assert.equal(result.missingIdIndexes.length, 1);
   assert.equal(result.emptyFieldIndexes.length, 2);
 });
+
+
+test("AS KARO normalizes and deduplicates matches locally, then releases only after confirmation", () => {
+  const data = [
+    { id: "m1", home: "  Real   Madrid ", away: "Celta", date: "2026-11-22" },
+    { id: "m1", home: "Real Madrid", away: "Celta", date: "2026-11-22" },
+    { id: "m2", home: "Barcelona", away: "Villarreal", date: "2026-11-22" },
+  ];
+  const held = runPluton({ operation: "karo", data });
+  assert.equal(held.card, "AS KARO");
+  assert.equal(held.symbol, "♦");
+  assert.equal(held.inputCount, 3);
+  assert.equal(held.uniqueCount, 2);
+  assert.deepEqual(held.duplicateIndexes, [1]);
+  assert.equal(held.status, "held");
+  assert.equal(held.networkCalls, 0);
+
+  const clean = runPluton({
+    operation: "karo",
+    confirmed: true,
+    data: [{ id: "m3", home: " Barcelona ", away: " Villarreal ", date: "2026-11-22" }],
+  });
+  assert.equal(clean.status, "released");
+  assert.equal(clean.releaseAllowed, true);
+  assert.equal(clean.matches[0].home, "Barcelona");
+  assert.equal(clean.networkCalls, 0);
+});
+
+test("AS KARO holds records without both match teams", () => {
+  const result = runPluton({
+    operation: "karo",
+    confirmed: true,
+    data: [{ id: "m1", home: "Barcelona", away: "" }],
+  });
+  assert.equal(result.status, "held");
+  assert.equal(result.releaseAllowed, false);
+  assert.deepEqual(result.invalidMatchIndexes, [0]);
+});
