@@ -132,7 +132,7 @@ export function runPluton(payload = {}) {
         engine: "PLUTON",
         operation: operation || null,
         error: "Unsupported local operation. No API was called.",
-        supportedOperations: ["health", "listCodes", "fleet", "zamka", "karo", "arsenal", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
+        supportedOperations: ["architecture", "health", "listCodes", "fleet", "zamka", "karo", "arsenal", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
         networkCalls: 0,
       };
   }
