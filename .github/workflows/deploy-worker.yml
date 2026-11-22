@@ -1,8 +1,6 @@
 name: Deploy Cloudflare Worker
 on:
-  push:
-    paths:
-      - 'cloudflare-worker/**'
+  # Manual only until the Cloudflare API token is repaired in repository secrets.
   workflow_dispatch:
 
 jobs:
