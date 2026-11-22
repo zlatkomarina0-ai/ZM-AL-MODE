@@ -160,6 +160,12 @@ test("ARSENAL only approves reviewed starter domains for automated fetch", () =>
   const approved = runPluton({ operation: "arsenal", action: "validateDomain", domain: "uefa.com" });
   assert.equal(approved.inStarterAllowlist, true);
   assert.equal(approved.allowedForAutomatedFetch, true);
+  const url = runPluton({ operation: "arsenal", action: "validateDomain", domain: "https://uefa.com/matches?season=2026" });
+  assert.equal(url.domain, "uefa.com");
+  assert.equal(url.syntacticallyValid, true);
+  assert.equal(url.allowedForAutomatedFetch, true);
+  const malformed = runPluton({ operation: "arsenal", action: "validateDomain", domain: "not a domain" });
+  assert.equal(malformed.syntacticallyValid, false);
   const unknown = runPluton({ operation: "arsenal", action: "validateDomain", domain: "random-unknown.example" });
   assert.equal(unknown.inStarterAllowlist, false);
   assert.equal(unknown.allowedForAutomatedFetch, false);
