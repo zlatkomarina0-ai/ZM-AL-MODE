@@ -18,7 +18,7 @@ The implementations are shared to avoid storing 30,000 duplicate programs. The n
 ## Local server routes
 
 - `GET /health` reports that the server is in local-only mode.
-- `POST /api/pluton` accepts local PLUTON operations such as `health`, `listCodes`, `fleet`, `normalize`, `deduplicate`, `compare`, `validateTeams`, and `mockApi`.
+- `POST /api/pluton` accepts local PLUTON operations such as `health`, `architecture`, `listCodes`, `fleet`, `normalize`, `deduplicate`, `compare`, `validateTeams`, and `mockApi`.
 - Unsupported routes return 404. Unsupported PLUTON operations do not trigger a network request.
 
 ## Verify locally
@@ -77,3 +77,13 @@ Do not mark this work complete until both commands pass in a real Node.js enviro
 - Интернет и пребарување се исклучени по дифолт; потребна е посебна серверска имплементација што почитува robots.txt, ограничувања на брзина, приватност и без заобиколување на најави или paywall-и.
 - DeepSeek е само опционална интеграциска точка, исклучена по дифолт. API-ключот, ако се вклучи, мора да биде runtime secret во серверската околина, никогаш во Git. Нема автоматски fallback.
 - Самата конфигурација не отвора мрежни конекции и не создава/вклучува реални компјутери.
+
+
+## Architecture manifest endpoint
+
+- `POST /api/pluton` with `{ "operation": "architecture" }` returns the declared ZLATKO AI MODE capacities as structured data without network calls.
+- The manifest keeps the dimensions separate: 1,000 chief profiles; 2,000,000 logical worker units per profile (2,000,000,000 target units total); 200,000,000 logical computer slots; and 1,000 website slots per computer.
+- **Ace of Spades (♠) / PLUTON:** local deterministic code modules, not an external API caller.
+- **Joker 1:** 100 AI-agent/firm registry slots and 30 ordinary-model registry slots. These are inventory slots, not claims that specific firms/models have been connected or activated. Integrations remain disabled by default.
+- **Joker 2:** reserved and intentionally unspecified until the project owner defines it.
+- Capacity values describe target architecture, not provisioned physical infrastructure or running processes.
