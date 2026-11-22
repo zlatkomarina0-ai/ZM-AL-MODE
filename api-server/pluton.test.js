@@ -189,3 +189,16 @@ test("ZLATKO architecture keeps card capacities and Joker 1 inventory explicit",
   assert.equal(result.architecture.joker1.integrationsEnabledByDefault, false);
   assert.equal(result.architecture.joker2.status, "reserved");
 });
+
+test("architecture operation is advertised and keeps Joker 2 reserved", () => {
+  const result = runPluton({ operation: "architecture" });
+  assert.equal(result.ok, true);
+  assert.equal(result.networkCalls, 0);
+  assert.equal(result.architecture.system, "ZLATKO AI MODE");
+  assert.equal(result.architecture.aceOfSpades.externalApiCalls, false);
+  assert.equal(result.architecture.joker2.status, "reserved");
+  assert.equal(result.architecture.joker2.role, null);
+
+  const unsupported = runPluton({ operation: "not-a-real-operation" });
+  assert.ok(unsupported.supportedOperations.includes("architecture"));
+});
