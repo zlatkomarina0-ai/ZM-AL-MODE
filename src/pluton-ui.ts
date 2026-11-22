@@ -256,12 +256,12 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
 
   document.getElementById('pluton-export-csv')!.addEventListener('click', () => {
     const tasks = getPlutonState().tasks;
-    const columns = ['matchId', 'homeTeam', 'awayTeam', 'chiefId', 'status', 'valid', 'errors', 'sport', 'liga', 'vreme', 'sifra'];
+    const columns = ['ID', 'matchId', 'homeTeam', 'awayTeam', 'chiefId', 'status', 'valid', 'errors', 'sport', 'liga', 'vreme', 'sifra'];
     const rows = tasks.map(task => {
       const payload = task.payload;
       const result = task.result ?? {};
       return columns.map(column => {
-        if (column === 'chiefId') return csvCell(task.chiefId);
+        if (column === 'ID') return csvCell(task.id);\n        if (column === 'chiefId') return csvCell(task.chiefId);
         if (column === 'status') return csvCell(task.status);
         if (column === 'valid') return csvCell(result.valid ?? '');
         if (column === 'errors') return csvCell(Array.isArray(result.errors) ? result.errors.join('; ') : task.error ?? '');
