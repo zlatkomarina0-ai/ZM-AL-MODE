@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start:api": "node api-server/server.js"
+    "start:api": "node api-server/server.js",
+    "test:pluton": "node --test api-server/pluton.test.js"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.0",
