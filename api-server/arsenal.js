@@ -57,7 +57,7 @@ const TRUSTED_STARTER_SITES = [
   { domain: "eurohandball.com", category: "handball", trust: "official-organization" },
   { domain: "olympics.com", category: "multi-sport", trust: "official-organization" },
   { domain: "worldathletics.org", category: "athletics", trust: "official-organization" },
-  { domain: "bbc.com/sport", category: "sports-news", trust: "established-newsroom" },
+  { domain: "bbc.com", category: "sports-news", trust: "established-newsroom" },
   { domain: "reuters.com", category: "news", trust: "established-newsroom" },
   { domain: "apnews.com", category: "news", trust: "established-newsroom" },
   { domain: "who.int", category: "public-information", trust: "intergovernmental" },
@@ -105,7 +105,7 @@ export function runArsenal(payload = {}) {
   if (operation === "validateDomain") {
     const raw = typeof payload.domain === "string" ? payload.domain.trim() : "";
         const candidate = raw.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].replace(/:\d+$/, "");
-    const allowed = TRUSTED_STARTER_SITES.some((site) => site.domain === candidate || site.domain.endsWith("/" + candidate));
+    const allowed = TRUSTED_STARTER_SITES.some((site) => site.domain === candidate);
     return {
       ok: true,
       domain: candidate,
