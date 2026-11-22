@@ -6,7 +6,6 @@ import {
   getPikovaOverview,
   getPikovaProjectView,
   grantPikovaRole,
-  PIKOVA_PLUTON_TARGET,
   processPikovaQueue,
   retryPikovaFailures,
 } from './pluton-pikova-dama';
