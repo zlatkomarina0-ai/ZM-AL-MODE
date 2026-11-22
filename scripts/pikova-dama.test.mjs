@@ -12,6 +12,7 @@ import {
   grantPikovaRole,
   processPikovaQueue,
   retryPikovaFailures,
+  validatePikovaState,
 } from '../src/pluton-pikova-dama.ts';
 
 const owner = { id: 'owner-1', role: 'owner' };
@@ -101,4 +102,42 @@ test('failed tasks can be retried only up to three attempts', () => {
   assert.equal(processPikovaQueue(state, owner, project.id).failed, 1);
   assert.equal(retryPikovaFailures(state, owner, project.id), 0);
   assert.equal(task.attempts, 3);
+});
+
+
+test('validates a complete backup and returns an independent state copy', () => {
+  const { state, project } = setup();
+  enqueuePikovaTask(state, owner, project.id, 'Backup task', { event: 'M1' }, 'backup-1');
+  const restored = validatePikovaState(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.projects.length, 1);
+  assert.equal(restored.tasks.length, 1);
+  assert.notEqual(restored.projects[0], state.projects[0]);
+  restored.projects[0].name = 'Restored copy';
+  assert.equal(state.projects[0].name, 'Project A');
+});
+
+test('rejects malformed backup, orphan tasks, duplicate idempotency keys, and reserved member IDs', () => {
+  const { state, project } = setup();
+  assert.throws(() => validatePikovaState({ version: 1, projects: [], tasks: 'bad', audit: [] }), /format/);
+  const orphan = structuredClone(state);
+  orphan.tasks.push({
+    id: 'orphan-task', projectId: 'missing-project', idempotencyKey: 'k', title: 'Orphan',
+    payload: {}, status: 'queued', attempts: 0, createdAt: 'now', updatedAt: 'now',
+  });
+  assert.throws(() => validatePikovaState(orphan), /missing project/);
+  const duplicate = structuredClone(state);
+  duplicate.tasks.push(
+    { id: 'task-1', projectId: project.id, idempotencyKey: 'same', title: 'One', payload: {}, status: 'queued', attempts: 0, createdAt: 'now', updatedAt: 'now' },
+    { id: 'task-2', projectId: project.id, idempotencyKey: 'same', title: 'Two', payload: {}, status: 'queued', attempts: 0, createdAt: 'now', updatedAt: 'now' },
+  );
+  assert.throws(() => validatePikovaState(duplicate), /duplicate idempotency keys/);
+  const unsafeMembers = structuredClone(state);
+  unsafeMembers.projects[0].members = JSON.parse('{"owner-1":"owner","__proto__":"viewer"}');
+  assert.throws(() => validatePikovaState(unsafeMembers), /invalid project member/);
+});
+
+test('rejects access through inherited member keys and reserved member assignment', () => {
+  const { state, project } = setup();
+  assert.throws(() => getPikovaProjectView(state, { id: 'toString', role: 'viewer' }, project.id), /Access denied/);
+  assert.throws(() => grantPikovaRole(state, owner, project.id, '__proto__', 'viewer'), /reserved object key/);
 });

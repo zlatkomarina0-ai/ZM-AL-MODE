@@ -8,6 +8,7 @@ import {
   grantPikovaRole,
   processPikovaQueue,
   retryPikovaFailures,
+  validatePikovaState,
 } from './pluton-pikova-dama';
 import {
   clearCompletedTasks,
@@ -143,6 +144,8 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
           <button id="pikova-retry" class="pluton-btn">Повтори грешки</button>
           <button id="pikova-export" class="pluton-btn">Извези дневник JSON</button>
         </div>
+        <label for="pikova-import-file" class="pluton-small">Врати резервна копија од JSON</label>
+        <input id="pikova-import-file" type="file" accept=".json,application/json" aria-label="Избери резервна копија на ПИКОВА ДАМА">
         <div class="pluton-card">
           <h4>Контрола на пристап</h4>
           <p class="pluton-small">Додај член со локален ID и улога. Ова е контрола на работниот тек во прелистувачот, не замена за серверска автентикација.</p>
@@ -409,21 +412,20 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     const saved = localStorage.getItem(PIKOVA_STORAGE_KEY);
     if (saved) {
       const parsed: unknown = JSON.parse(saved);
-      if (typeof parsed === 'object' && parsed !== null && 'version' in parsed && parsed.version === 1 &&
-          'projects' in parsed && Array.isArray(parsed.projects) && 'tasks' in parsed && Array.isArray(parsed.tasks) &&
-          'audit' in parsed && Array.isArray(parsed.audit)) {
-        pikovaState = parsed as typeof pikovaState;
-      }
+      pikovaState = validatePikovaState(parsed);
     }
   } catch {
     pikovaState = createPikovaState();
+    message('pikova-message', 'Локалната состојба не помина проверка. Започна празна состојба; ако имаш JSON резервна копија, врати ја преку контролата подолу.', true);
   }
 
-  function savePikova(): void {
+  function savePikova(): boolean {
     try {
       localStorage.setItem(PIKOVA_STORAGE_KEY, JSON.stringify(pikovaState));
+      return true;
     } catch {
       message('pikova-message', 'Не може да се зачува во локалниот прелистувач. Извези го дневникот.', true);
+      return false;
     }
   }
 
@@ -527,6 +529,49 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
   document.getElementById('pikova-export')!.addEventListener('click', () => {
     download('zlatko-pikova-dama-audit-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(pikovaState, null, 2), 'application/json;charset=utf-8');
     message('pikova-message', 'PIKOVA DAMA проектите, задачите и дневникот се извезени во JSON.');
+  });
+
+  document.getElementById('pikova-import-file')!.addEventListener('change', () => {
+    const fileInput = document.getElementById('pikova-import-file') as HTMLInputElement;
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.size > 5_000_000) {
+      message('pikova-message', 'Резервната копија е поголема од 5 MB.', true);
+      fileInput.value = '';
+      return;
+    }
+    if ((pikovaState.projects.length || pikovaState.tasks.length || pikovaState.audit.length) &&
+        !window.confirm('Враќањето ќе ја замени тековната локална состојба на ПИКОВА ДАМА. Прво извези копија ако ти треба. Продолжи?')) {
+      fileInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const previousState = pikovaState;
+      try {
+        const parsed: unknown = JSON.parse(String(reader.result ?? ''));
+        pikovaState = validatePikovaState(parsed);
+        pikovaSelectedProject = '';
+        if (!savePikova()) {
+          pikovaState = previousState;
+          renderPikova();
+          return;
+        }
+        renderPikova();
+        message('pikova-message', 'Резервната копија е проверена и вратена. Проекти: ' + pikovaState.projects.length + '; задачи: ' + pikovaState.tasks.length + '.');
+      } catch (error) {
+        pikovaState = previousState;
+        renderPikova();
+        message('pikova-message', error instanceof Error ? error.message : 'Резервната копија не може да се прочита.', true);
+      } finally {
+        fileInput.value = '';
+      }
+    };
+    reader.onerror = () => {
+      message('pikova-message', 'Не успеав да ја прочитам резервната копија.', true);
+      fileInput.value = '';
+    };
+    reader.readAsText(file);
   });
 
   document.getElementById('pikova-project-count')!.textContent = '0';

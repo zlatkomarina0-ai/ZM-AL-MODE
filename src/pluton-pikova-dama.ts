@@ -83,8 +83,123 @@ export function createPikovaState(): PikovaState {
 }
 
 function requireActor(actor: PikovaActor): void {
-  if (!actor || typeof actor.id !== 'string' || !actor.id.trim()) throw new Error('Actor ID is required.');
+  if (!actor || typeof actor.id !== 'string' || !actor.id.trim() || actor.id.length > 120) throw new Error('Actor ID must be 1–120 characters.');
   if (!['owner', 'operator', 'viewer'].includes(actor.role)) throw new Error('Unsupported role.');
+}
+
+const RESERVED_MEMBER_IDS = new Set(['__proto__', 'prototype', 'constructor']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/**
+ * Validate and copy a JSON backup before it replaces local browser state.
+ * This is integrity validation, not authentication or a server-side security boundary.
+ */
+export function validatePikovaState(input: unknown): PikovaState {
+  if (!isRecord(input) || input.version !== 1 ||
+      !Array.isArray(input.projects) || !Array.isArray(input.tasks) || !Array.isArray(input.audit)) {
+    throw new Error('Backup format is invalid or unsupported.');
+  }
+  if (input.projects.length > PIKOVA_PROJECT_LIMIT) throw new Error('Backup exceeds the 1,000-project limit.');
+  if (input.audit.length > 50_000) throw new Error('Backup exceeds the 50,000-event audit limit.');
+
+  const projects: PikovaProject[] = [];
+  const projectIds = new Set<string>();
+  const projectNames = new Set<string>();
+  for (const value of input.projects) {
+    if (!isRecord(value) || !nonEmptyString(value.id) || !nonEmptyString(value.name) ||
+        value.name.trim().length > PIKOVA_MAX_TITLE_LENGTH || !nonEmptyString(value.ownerId) ||
+        !isRecord(value.members) || value.plutonAllocation !== PIKOVA_PLUTONS_PER_PROJECT ||
+        !nonEmptyString(value.createdAt) || !nonEmptyString(value.updatedAt)) {
+      throw new Error('Backup contains an invalid project record.');
+    }
+    if (projectIds.has(value.id)) throw new Error('Backup contains duplicate project IDs.');
+    const normalizedName = value.name.trim().toLocaleLowerCase();
+    if (projectNames.has(normalizedName)) throw new Error('Backup contains duplicate project names.');
+    const members: Record<string, PikovaRole> = Object.create(null) as Record<string, PikovaRole>;
+    for (const [memberId, role] of Object.entries(value.members)) {
+      if (!memberId.trim() || memberId.length > 120 || RESERVED_MEMBER_IDS.has(memberId) ||
+          !['owner', 'operator', 'viewer'].includes(String(role))) {
+        throw new Error('Backup contains an invalid project member or role.');
+      }
+      members[memberId] = role as PikovaRole;
+    }
+    if (members[value.ownerId] !== 'owner') throw new Error('Backup project owner is missing or has an invalid role.');
+    projectIds.add(value.id);
+    projectNames.add(normalizedName);
+    projects.push({
+      id: value.id, name: value.name.trim(), ownerId: value.ownerId, members,
+      plutonAllocation: PIKOVA_PLUTONS_PER_PROJECT, createdAt: value.createdAt, updatedAt: value.updatedAt,
+    });
+  }
+
+  const tasks: PikovaTask[] = [];
+  const taskIds = new Set<string>();
+  const idempotencyKeys = new Set<string>();
+  for (const value of input.tasks) {
+    if (!isRecord(value) || !nonEmptyString(value.id) || !nonEmptyString(value.projectId) ||
+        !nonEmptyString(value.idempotencyKey) || value.idempotencyKey.length > 200 ||
+        !nonEmptyString(value.title) || value.title.trim().length > PIKOVA_MAX_TITLE_LENGTH ||
+        !isRecord(value.payload) || !['queued', 'done', 'failed'].includes(String(value.status)) ||
+        !Number.isInteger(value.attempts) || Number(value.attempts) < 0 || Number(value.attempts) > PIKOVA_MAX_ATTEMPTS ||
+        !nonEmptyString(value.createdAt) || !nonEmptyString(value.updatedAt)) {
+      throw new Error('Backup contains an invalid task record.');
+    }
+    if (!projectIds.has(value.projectId)) throw new Error('Backup task refers to a missing project.');
+    if (taskIds.has(value.id)) throw new Error('Backup contains duplicate task IDs.');
+    const compoundKey = JSON.stringify([value.projectId, value.idempotencyKey]);
+    if (idempotencyKeys.has(compoundKey)) throw new Error('Backup contains duplicate idempotency keys in a project.');
+    const serializedPayload = JSON.stringify(value.payload);
+    if (serializedPayload.length > PIKOVA_MAX_PAYLOAD_LENGTH) throw new Error('Backup contains a task payload larger than 20 KB.');
+    let result: PikovaTask['result'];
+    if (value.result !== undefined) {
+      if (!isRecord(value.result) || typeof value.result.accepted !== 'boolean' || typeof value.result.summary !== 'string') {
+        throw new Error('Backup contains an invalid task result.');
+      }
+      result = { accepted: value.result.accepted, summary: value.result.summary };
+    }
+    if (value.error !== undefined && typeof value.error !== 'string') throw new Error('Backup contains an invalid task error.');
+    taskIds.add(value.id);
+    idempotencyKeys.add(compoundKey);
+    tasks.push({
+      id: value.id, projectId: value.projectId, idempotencyKey: value.idempotencyKey,
+      title: value.title.trim(), payload: JSON.parse(serializedPayload) as Record<string, unknown>,
+      status: value.status as PikovaTaskStatus, attempts: Number(value.attempts),
+      ...(result ? { result } : {}), ...(typeof value.error === 'string' ? { error: value.error } : {}),
+      createdAt: value.createdAt, updatedAt: value.updatedAt,
+    });
+  }
+
+  const audit: PikovaAuditEvent[] = [];
+  for (const value of input.audit) {
+    if (!isRecord(value) || !nonEmptyString(value.id) || !nonEmptyString(value.projectId) ||
+        !projectIds.has(value.projectId) || !nonEmptyString(value.actorId) ||
+        !nonEmptyString(value.action) || !nonEmptyString(value.targetId) || !nonEmptyString(value.timestamp)) {
+      throw new Error('Backup contains an invalid audit event.');
+    }
+    let details: PikovaAuditEvent['details'];
+    if (value.details !== undefined) {
+      if (!isRecord(value.details) || Object.values(value.details).some(item =>
+        typeof item !== 'string' && typeof item !== 'number' && typeof item !== 'boolean')) {
+        throw new Error('Backup contains invalid audit details.');
+      }
+      details = value.details as PikovaAuditEvent['details'];
+    }
+    audit.push({
+      id: value.id, projectId: value.projectId, actorId: value.actorId,
+      action: value.action, targetId: value.targetId, timestamp: value.timestamp,
+      ...(details ? { details: { ...details } } : {}),
+    });
+  }
+  return { version: 1, projects, tasks, audit };
 }
 
 function findProject(state: PikovaState, projectId: string): PikovaProject {
@@ -96,8 +211,9 @@ function findProject(state: PikovaState, projectId: string): PikovaProject {
 function authorize(state: PikovaState, projectId: string, actor: PikovaActor, required: 'read' | 'work' | 'admin'): PikovaProject {
   requireActor(actor);
   const project = findProject(state, projectId);
+  if (!Object.hasOwn(project.members, actor.id)) throw new Error('Access denied: actor is not a member of this project.');
   const role = project.members[actor.id];
-  if (!role) throw new Error('Access denied: actor is not a member of this project.');
+  if (!['owner', 'operator', 'viewer'].includes(role)) throw new Error('Access denied: member role is invalid.');
   const allowed = required === 'read'
     ? ['owner', 'operator', 'viewer'].includes(role)
     : required === 'work'
@@ -150,7 +266,7 @@ export function grantPikovaRole(
 ): void {
   const project = authorize(state, projectId, actor, 'admin');
   const cleanMember = typeof memberId === 'string' ? memberId.trim() : '';
-  if (!cleanMember || cleanMember.length > 120) throw new Error('Member ID must be 1–120 characters.');
+  if (!cleanMember || cleanMember.length > 120 || RESERVED_MEMBER_IDS.has(cleanMember)) throw new Error('Member ID must be 1–120 characters and cannot be a reserved object key.');
   if (!['owner', 'operator', 'viewer'].includes(role)) throw new Error('Unsupported role.');
   if (cleanMember === project.ownerId && role !== 'owner') throw new Error('The project owner role cannot be downgraded.');
   if (cleanMember !== project.ownerId && role === 'owner') throw new Error('Ownership transfer is not supported in this version.');
