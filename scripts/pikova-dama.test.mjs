@@ -132,7 +132,7 @@ test('rejects malformed backup, orphan tasks, duplicate idempotency keys, and re
   );
   assert.throws(() => validatePikovaState(duplicate), /duplicate idempotency keys/);
   const unsafeMembers = structuredClone(state);
-  unsafeMembers.projects[0].members['__proto__'] = 'viewer';
+  unsafeMembers.projects[0].members = JSON.parse('{"owner-1":"owner","__proto__":"viewer"}');
   assert.throws(() => validatePikovaState(unsafeMembers), /invalid project member/);
 });
 
