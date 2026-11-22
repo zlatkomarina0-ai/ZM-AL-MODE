@@ -80,7 +80,7 @@ export function listArsenalSites() {
 }
 
 export function runArsenal(payload = {}) {
-  const operation = typeof payload.operation === "string" ? payload.operation : "status";
+  const operation = typeof payload.action === "string" ? payload.action : "status";
 
   if (operation === "status") {
     return {
