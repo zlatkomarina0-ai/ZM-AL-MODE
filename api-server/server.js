@@ -88,4 +88,9 @@ const server = createServer(async (req, res) => {
     }
   }
 
-  return send(res, 404, { error: "Only local PLUTON routes are enabled.", engine: "PLUTON", networkCalls: 0 }, cors);\n});\n\nserver.listen(PORT, "0.0.0.0", () => {\n  console.log("ZLATKO PLUTON local-only server listening on port " + PORT);\n});\n
+  return send(res, 404, { error: "Only local PLUTON routes are enabled.", engine: "PLUTON", networkCalls: 0 }, cors);
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log("ZLATKO PLUTON local-only server listening on port " + PORT);
+});
