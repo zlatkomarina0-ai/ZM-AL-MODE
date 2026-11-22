@@ -7,7 +7,7 @@
  * securely by a backend, rate-limit handling, and runtime monitoring.
  */
 
-import type { CentralMatch, MatchTask, OperationalTeam } from './zlatko-central';
+import type { CentralMatch, OperationalTeam } from './zlatko-central';
 import { createCentralRun } from './zlatko-central';
 import type { FederationRegistry, AgentRecord, ModelRecord, ProviderRecord } from './provider-federation';
 import { getEnabledRoutingCatalog } from './provider-federation';
