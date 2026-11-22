@@ -54,3 +54,11 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - Important boundary: this is client/library policy, not an enforced firewall, malware-signature antivirus, sandbox, or server-side authentication. Production requires trusted server/network enforcement, safe DNS/redirect handling, real file scanning, persistent server-side audit, and adversarial tests.
 - Free-only: no new paid dependency or AI API call.
 - Design: `docs/dama-tref-input-only-security.md`.
+
+
+
+## DAMA TREF ♣ — boundary hardening follow-up
+- Hardened the health-only Cloudflare Worker with restrictive browser security headers, no-store caching, origin allowlisting, and explicit `outboundNetwork: false`.
+- Worker remains GET/OPTIONS-only; no website-fetch, proxy, upload, or AI API route is introduced.
+- Added regression tests for headers, origin, methods, unknown routes, and accidental outbound-network calls in Worker source.
+- This does not establish network-level egress controls or server-side employee authentication; deployment and infrastructure must be independently verified.
