@@ -28,3 +28,9 @@ No paid dependency, external AI API call, or automatic web fetch is added. This 
 
 ## Tests
 The npm script test:pluton runs PLUTON, PIKOVA DAMA, and DAMA TREF tests.
+
+## Boundary hardening follow-up
+- The health-only Cloudflare Worker now emits no-store and browser security headers, rejects unapproved Origin headers, and advertises that outbound network access is disabled.
+- The Worker remains GET/OPTIONS-only and exposes no fetch, proxy, or source-download endpoint.
+- Regression tests exercise origin/method/path behavior and scan the Worker source for accidental outbound-network capability.
+- This is defense-in-depth, not proof of network-level egress isolation. Cloudflare account/network controls and a deployed endpoint still need independent verification.
