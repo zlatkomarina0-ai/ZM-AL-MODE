@@ -28,3 +28,10 @@ The default is local/mock processing. No paid API fallback exists. Any future re
 
 ## Build checks
 GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run build` for pull requests. The separate Pages workflow deploys the static site from `main`. The scheduled workflow also runs the local processor tests before processing the bulletin.
+
+## JOKER 2 parallel line
+- Added a local coefficient classifier with five non-overlapping bands: [2,5), [5,10), [10,20), [20,30], and >30.
+- The target is 500,000 logical workers per band (2,500,000 total), with the AS KARO equipment targets inherited: PLUTON CODE ♠, 1,000 web sources per worker, and a shared target of 200 million computers.
+- The PLUTON UI can classify coefficients from imported match tasks, show band counts and export a CSV report.
+- These are logical architecture targets only. No live workers/computers/web crawlers are provisioned; no external AI provider calls are made.
+- Design details: `docs/joker-2-coefficient-line.md`.
