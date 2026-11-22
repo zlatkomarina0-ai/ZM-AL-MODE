@@ -29,7 +29,7 @@ test('only exposes GET and OPTIONS and has no unknown routes', async () => {
 
 test('health worker has no outbound network or proxy capability in source', async () => {
   const source = await readFile(new URL('../cloudflare-worker/worker.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /(?:globalThis\\.|window\\.)fetch\\s*\\(|\\bawait\\s+fetch\\s*\\(/);
+  assert.doesNotMatch(source, /(?:globalThis\.|window\.)fetch\s*\(|\bawait\s+fetch\s*\(/);
   assert.doesNotMatch(source, /WebSocket|connect\s*\(/);
   assert.match(source, /outboundNetwork:\s*false/);
 });
