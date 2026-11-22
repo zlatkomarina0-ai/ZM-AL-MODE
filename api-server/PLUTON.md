@@ -31,3 +31,11 @@ npm run build
 ```
 
 Do not mark this work complete until both commands pass in a real Node.js environment. A missing CI run is not a passing test.
+
+## ZAMKA integrity card
+
+- `POST /api/pluton` with `{ "operation": "zamka", "data": [...] }` runs the ZAMKA card locally.
+- It checks duplicate records, missing IDs, and empty fields.
+- Results remain `held` by default. A result is marked `released` only when `confirmed: true` is supplied and no integrity issues are found.
+- ZAMKA is a deterministic integrity gate, not an AI model; it performs zero network calls.
+- The current checks are a first implementation and should be expanded with competition-specific match/data rules as those rules are defined.
