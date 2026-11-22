@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { processBulletin, reportToCsv } from './pluton-scheduled.mjs';
+import { parseSportLifeText, processBulletin, reportToCsv } from './pluton-scheduled.mjs';
 
 test('processes matches locally and assigns deterministic chief IDs', () => {
   const report = processBulletin(JSON.stringify({
@@ -44,4 +44,25 @@ test('writes correctly escaped CSV values', () => {
   const csv = reportToCsv(report);
   assert.match(csv, /"Team, ""A"""/);
   assert.match(csv.split('\r\n')[0], /^ID,matchId,homeTeam,awayTeam/);
+});
+
+test('parses raw SportLife text without treating kickoff times as matches', () => {
+  const raw = [
+    'England Premier League',
+    'Arsenal : Chelsea',
+    '18:00',
+    '12345',
+    'Конечен Тип 1.8 X3.2 4.2',
+    'ГГ1.7 НГ2.0',
+    '0-1 гол2.2 2+1.5',
+  ].join('\n');
+  const matches = parseSportLifeText(raw);
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].homeTeam, 'Arsenal');
+  assert.equal(matches[0].awayTeam, 'Chelsea');
+  assert.equal(matches[0].matchId, '12345');
+  assert.equal(matches[0].league, 'England Premier League');
+  assert.equal(matches[0].odds.home, 1.8);
+  assert.equal(matches[0].odds.draw, 3.2);
+  assert.equal(matches[0].odds.away, 4.2);
 });
