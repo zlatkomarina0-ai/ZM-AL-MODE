@@ -6,12 +6,11 @@
  */
 export const ARSENAL_CONFIG = Object.freeze({
   name: "ARSENAL ORUZJE",
-  workers: 2000000,
-  workerLines: 4,
-  workersPerLine: 500000,
-  virtualComputersPerWorker: 100,
-  websiteSlotsPerComputer: 1000,
+  chiefProfiles: 1000,
+  workersPerProfile: 2000000,
+  totalLogicalWorkerUnits: 2000000000,
   totalLogicalComputerSlots: 200000000,
+  websiteSlotsPerComputer: 1000,
   totalWebsiteAssignments: 200000000000,
   internetAccess: { enabled: false, requiresDeploymentConfiguration: true },
   search: {
