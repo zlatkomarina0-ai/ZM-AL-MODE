@@ -143,15 +143,17 @@ test("ARSENAL reports logical capacity without claiming real computers or intern
   const { runArsenal, ARSENAL_CONFIG } = await import("./arsenal.js");
   const result = runPluton({ operation: "arsenal" });
   assert.equal(result.arsenal, "ARSENAL ORUZJE");
+  assert.equal(result.config.chiefProfiles, 1000);
+  assert.equal(result.config.workersPerProfile, 2000000);
+  assert.equal(result.config.totalLogicalWorkerUnits, 2000000000);
   assert.equal(result.config.totalLogicalComputerSlots, 200000000);
   assert.equal(result.config.websiteSlotsPerComputer, 1000);
-  assert.equal(result.config.workersPerLine, 500000);
   assert.equal(result.config.totalWebsiteAssignments, 200000000000);
   assert.equal(result.internetReady, false);
   assert.equal(result.searchReady, false);
   assert.equal(result.deepseekEnabled, false);
   assert.equal(result.networkCalls, 0);
-  assert.equal(ARSENAL_CONFIG.workers, 2000000);
+  assert.equal(ARSENAL_CONFIG.chiefProfiles, 1000);
 });
 
 test("ARSENAL only approves reviewed starter domains for automated fetch", () => {
