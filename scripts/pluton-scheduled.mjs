@@ -23,6 +23,63 @@ export function normalizeTeamName(value) {
     .replace(/\s+/g, ' ');
 }
 
+export function parseSportLifeText(text) {
+  const lines = String(text ?? '').split(/\r?\n/);
+  const matches = [];
+  let league = 'Непозната Лига';
+  let sport = 'Фудбал';
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (/Кошарка|Basketball/i.test(line)) sport = 'Кошарка';
+    else if (/Ракомет|Handball/i.test(line)) sport = 'Ракомет';
+    else if (/Тенис|Tennis/i.test(line)) sport = 'Тенис';
+    else if (/Хокеј|Hockey/i.test(line)) sport = 'Хокеј';
+
+    if (/^[A-Za-zА-Ша-ш\s.]+$/i.test(line) &&
+        ['England', 'Spain', 'Italy', 'Germany', 'France', 'UEFA', 'League'].some(term => line.includes(term))) {
+      league = line;
+    }
+
+    const match = line.match(/(.+?)\s*:\s*(.+)/);
+    if (!match) continue;
+
+    const homeTeam = match[1].trim();
+    const awayTeam = match[2].trim();
+    if (!homeTeam || !awayTeam) continue;
+
+    const block = lines.slice(i, Math.min(i + 60, lines.length)).join(' ');
+    const finalOdds = block.match(/(?:Конечен Тип|Конечен исход)\s*([\d.]+)(?:\s*X([\d.]+))?\s*([\d.]+)/);
+    if (!finalOdds) continue;
+
+    const ggNg = block.match(/ГГ([\d.]+)\s*НГ([\d.]+)/);
+    const goals = block.match(/0-1 гол([\d.]+)\s*2\+([\d.]+)/);
+    const time = lines[i + 1] ? lines[i + 1].trim() : '';
+    const code = lines[i + 2] ? lines[i + 2].trim() : '';
+
+    matches.push({
+      matchId: code || 'MATCH-' + String(matches.length + 1).padStart(4, '0'),
+      homeTeam,
+      awayTeam,
+      sport,
+      league,
+      liga: league,
+      vreme: time,
+      sifra: code,
+      odds: {
+        home: Number.parseFloat(finalOdds[1]),
+        draw: finalOdds[2] ? Number.parseFloat(finalOdds[2]) : 0,
+        away: Number.parseFloat(finalOdds[3]),
+        gg: ggNg ? Number.parseFloat(ggNg[1]) : 0,
+        ng: ggNg ? Number.parseFloat(ggNg[2]) : 0,
+        tg2plus: goals ? Number.parseFloat(goals[2]) : 0,
+      },
+    });
+  }
+
+  return matches;
+}
+
 function stableId(matchId, homeNormalized, awayNormalized) {
   return createHash('sha256')
     .update(matchId.toLocaleLowerCase() + '|' + homeNormalized + '|' + awayNormalized)
@@ -200,22 +257,50 @@ export async function runScheduledJob({
   }
 
   let raw;
+  let sourcePath = inputPath;
   try {
-    raw = await readFile(inputPath, 'utf8');
+    raw = await readFile(sourcePath, 'utf8');
   } catch (error) {
-    if (error && error.code === 'ENOENT') {
+    if (error && error.code === 'ENOENT' && sourcePath === 'data/bulletin.json') {
+      sourcePath = 'data/bulletin.txt';
+      try {
+        raw = await readFile(sourcePath, 'utf8');
+      } catch (fallbackError) {
+        if (fallbackError && fallbackError.code === 'ENOENT') {
+          const report = skippedReport(
+            'skipped_missing_bulletin',
+            'No source file at data/bulletin.json or data/bulletin.txt. Add/update a real JSON or raw SportLife text bulletin.',
+            generatedAt,
+          );
+          await writeOutputs(report, outputDirectory);
+          return report;
+        }
+        throw fallbackError;
+      }
+    } else if (error && error.code === 'ENOENT') {
       const report = skippedReport(
         'skipped_missing_bulletin',
-        'No source file at ' + inputPath + '. Add/update the JSON bulletin file to enable scheduled processing.',
+        'No source file at ' + sourcePath + '. Add/update a real JSON or raw SportLife text bulletin.',
         generatedAt,
       );
       await writeOutputs(report, outputDirectory);
       return report;
+    } else {
+      throw error;
     }
-    throw error;
   }
 
-  const report = processBulletin(raw, generatedAt);
+  let report;
+  if (/\.(txt|text)$/i.test(sourcePath)) {
+    const matches = parseSportLifeText(raw);
+    if (!matches.length) throw new Error('No matches recognized in the raw SportLife text. Check the source format and final-odds blocks.');
+    report = processBulletin(JSON.stringify({ matches }), generatedAt);
+    report.inputFormat = 'sportlife-text';
+  } else {
+    report = processBulletin(raw, generatedAt);
+    report.inputFormat = 'json';
+  }
+  report.source = sourcePath;
   await writeOutputs(report, outputDirectory);
   return report;
 }
