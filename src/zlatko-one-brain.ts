@@ -125,6 +125,8 @@ export class ZlatkoOneBrain {
     teams: 3;
     roles: 12;
     agentSlots: 100;
+    /** Backward-compatible display alias; 30 is per agent, not global. */
+    modelSlots: 30;
     modelSlotsPerAgent: 30;
     maxAgentModelAssignments: 3000;
     configuredModels: number;
@@ -137,6 +139,7 @@ export class ZlatkoOneBrain {
       teams: 3,
       roles: 12,
       agentSlots: 100,
+      modelSlots: 30,
       modelSlotsPerAgent: 30,
       maxAgentModelAssignments: 3000,
       configuredModels: this.computer.getConfiguredModelIds().length,
