@@ -74,3 +74,28 @@ test("PLUTON code catalog lists exactly 30 local code modules", () => {
   assert.equal(result.networkCalls, 0);
   assert.equal(result.codes.length, 30);
 });
+
+test("ZAMKA holds results until confirmed and clean", () => {
+  const held = runPluton({ operation: "zamka", data: [{ id: "m1", score: "2-1" }] });
+  assert.equal(held.card, "ZAMKA");
+  assert.equal(held.status, "held");
+  assert.equal(held.releaseAllowed, false);
+  assert.equal(held.networkCalls, 0);
+
+  const released = runPluton({ operation: "zamka", data: [{ id: "m1", score: "2-1" }], confirmed: true });
+  assert.equal(released.status, "released");
+  assert.equal(released.releaseAllowed, true);
+});
+
+test("ZAMKA holds duplicate, missing-ID, and empty-field records", () => {
+  const result = runPluton({
+    operation: "zamka",
+    confirmed: true,
+    data: [{ id: "m1", score: "" }, { id: "m1", score: "" }, { score: "1-0" }],
+  });
+  assert.equal(result.status, "held");
+  assert.equal(result.releaseAllowed, false);
+  assert.equal(result.duplicateIndexes.length, 1);
+  assert.equal(result.missingIdIndexes.length, 1);
+  assert.equal(result.emptyFieldIndexes.length, 2);
+});
