@@ -30,7 +30,6 @@ export type BrainRoutingPlan = {
 };
 
 function selectAgentForTask(
-  task: MatchTask,
   agents: AgentRecord[],
   models: ModelRecord[],
   providers: ProviderRecord[],
@@ -82,7 +81,6 @@ export function createZlatkoBrainRoutingPlan(input: {
 
   for (const task of centralRun.tasks) {
     const selected = selectAgentForTask(
-      task,
       catalog.agents,
       catalog.models,
       catalog.providers,
