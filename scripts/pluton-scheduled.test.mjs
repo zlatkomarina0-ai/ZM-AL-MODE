@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSportLifeText, processBulletin, reportToCsv } from './pluton-scheduled.mjs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { parseSportLifeText, processBulletin, reportToCsv, runScheduledJob } from './pluton-scheduled.mjs';
 
 test('processes matches locally and assigns deterministic chief IDs', () => {
   const report = processBulletin(JSON.stringify({
@@ -65,4 +68,35 @@ test('parses raw SportLife text without treating kickoff times as matches', () =
   assert.equal(matches[0].odds.home, 1.8);
   assert.equal(matches[0].odds.draw, 3.2);
   assert.equal(matches[0].odds.away, 4.2);
+});
+
+test('honors 07:30 Europe/Skopje in both winter and summer UTC offsets', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'pluton-schedule-test-'));
+  try {
+    const missingInput = join(root, 'missing-bulletin.json');
+    const summer = await runScheduledJob({
+      inputPath: missingInput,
+      outputDirectory: join(root, 'summer'),
+      eventName: 'schedule',
+      now: new Date('2026-06-02T05:30:00.000Z'),
+    });
+    const winter = await runScheduledJob({
+      inputPath: missingInput,
+      outputDirectory: join(root, 'winter'),
+      eventName: 'schedule',
+      now: new Date('2026-11-24T06:30:00.000Z'),
+    });
+    const wrongSlot = await runScheduledJob({
+      inputPath: missingInput,
+      outputDirectory: join(root, 'wrong-slot'),
+      eventName: 'schedule',
+      now: new Date('2026-06-02T06:30:00.000Z'),
+    });
+
+    assert.equal(summer.status, 'skipped_missing_bulletin');
+    assert.equal(winter.status, 'skipped_missing_bulletin');
+    assert.equal(wrongSlot.status, 'skipped_outside_local_schedule');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
