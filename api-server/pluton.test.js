@@ -141,7 +141,7 @@ test("AS KARO holds records without both match teams", () => {
 
 test("ARSENAL reports logical capacity without claiming real computers or internet are active", async () => {
   const { runArsenal, ARSENAL_CONFIG } = await import("./arsenal.js");
-  const result = runPluton({ operation: "arsenal", operation: "arsenal" });
+  const result = runPluton({ operation: "arsenal" });
   assert.equal(result.arsenal, "ARSENAL ORUZJE");
   assert.equal(result.config.totalLogicalComputerSlots, 10000);
   assert.equal(result.config.websiteSlotsPerComputer, 1000);
@@ -153,10 +153,10 @@ test("ARSENAL reports logical capacity without claiming real computers or intern
 });
 
 test("ARSENAL only approves reviewed starter domains for automated fetch", () => {
-  const approved = runPluton({ operation: "arsenal", domain: "uefa.com" });
+  const approved = runPluton({ operation: "arsenal", action: "validateDomain", domain: "uefa.com" });
   assert.equal(approved.inStarterAllowlist, true);
   assert.equal(approved.allowedForAutomatedFetch, true);
-  const unknown = runPluton({ operation: "arsenal", domain: "random-unknown.example" });
+  const unknown = runPluton({ operation: "arsenal", action: "validateDomain", domain: "random-unknown.example" });
   assert.equal(unknown.inStarterAllowlist, false);
   assert.equal(unknown.allowedForAutomatedFetch, false);
 });
