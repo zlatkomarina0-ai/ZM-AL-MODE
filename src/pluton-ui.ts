@@ -298,7 +298,11 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
 
   document.getElementById('pluton-export-csv')!.addEventListener('click', () => {
     const tasks = getPlutonState().tasks;
-    const columns = ['ID', 'matchId', 'homeTeam', 'awayTeam', 'chiefId', 'status', 'valid', 'errors', 'sport', 'liga', 'vreme', 'sifra'];
+    const columns = [
+      'ID', 'matchId', 'homeTeam', 'awayTeam', 'chiefId', 'status', 'attempts',
+      'valid', 'errors', 'error', 'sport', 'league', 'liga', 'vreme', 'sifra',
+      'odds', 'homeNormalized', 'awayNormalized', 'createdAt', 'updatedAt',
+    ];
     const rows = tasks.map(task => {
       const payload = task.payload;
       const result = task.result ?? {};
@@ -306,9 +310,15 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
         if (column === 'ID') return csvCell(task.id);
         if (column === 'chiefId') return csvCell(task.chiefId);
         if (column === 'status') return csvCell(task.status);
+        if (column === 'attempts') return csvCell(task.attempts);
+        if (column === 'createdAt') return csvCell(task.createdAt);
+        if (column === 'updatedAt') return csvCell(task.updatedAt);
+        if (column === 'error') return csvCell(task.error ?? '');
         if (column === 'valid') return csvCell(result.valid ?? '');
         if (column === 'errors') return csvCell(Array.isArray(result.errors) ? result.errors.join('; ') : task.error ?? '');
-        return csvCell(payload[column] ?? '');
+        if (column === 'homeNormalized' || column === 'awayNormalized') return csvCell(result[column] ?? '');
+        const value = payload[column];
+        return csvCell(value !== null && typeof value === 'object' ? JSON.stringify(value) : value ?? '');
       }).join(',');
     });
     download(`zlatko-pluton-appsheet-${new Date().toISOString().slice(0, 10)}.csv`, [columns.join(','), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
