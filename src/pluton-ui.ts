@@ -412,14 +412,11 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     const saved = localStorage.getItem(PIKOVA_STORAGE_KEY);
     if (saved) {
       const parsed: unknown = JSON.parse(saved);
-      if (typeof parsed === 'object' && parsed !== null && 'version' in parsed && parsed.version === 1 &&
-          'projects' in parsed && Array.isArray(parsed.projects) && 'tasks' in parsed && Array.isArray(parsed.tasks) &&
-          'audit' in parsed && Array.isArray(parsed.audit)) {
-        pikovaState = parsed as typeof pikovaState;
-      }
+      pikovaState = validatePikovaState(parsed);
     }
   } catch {
     pikovaState = createPikovaState();
+    message('pikova-message', 'Локалната состојба не помина проверка. Започна празна состојба; ако имаш JSON резервна копија, врати ја преку контролата подолу.', true);
   }
 
   function savePikova(): boolean {
