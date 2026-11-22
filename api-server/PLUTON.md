@@ -87,3 +87,12 @@ Do not mark this work complete until both commands pass in a real Node.js enviro
 - **Joker 1:** 100 AI-agent/firm registry slots and 30 ordinary-model registry slots. These are inventory slots, not claims that specific firms/models have been connected or activated. Integrations remain disabled by default.
 - **Joker 2:** reserved and intentionally unspecified until the project owner defines it.
 - Capacity values describe target architecture, not provisioned physical infrastructure or running processes.
+
+## Gemini API — безбедна подготвеност, не активна интеграција
+
+- Gemini API не е поврзан или активиран во оваа верзија. Не се тврди дека има потврден бесплатен кредит или квота за конкретната сметка.
+- Проектната цел за идно тестирање е најмногу **120 барања дневно** и **3.600 барања во 30 дена**, но ова е локална проектна граница, не гаранција од Google.
+- Пред вклучување мора да се провери бесплатната квота (requests per day / requests per minute) за конкретниот модел и Google AI Studio проект.
+- Не ставај API key во Git, клиентски код или логови. Ако интеграцијата подоцна биде одобрена, клучот мора да биде серверска environment secret.
+- Не повикувај Gemini автоматски од PLUTON и не прави автоматски fallback. До експлицитна конфигурација, надворешните API-повици остануваат исклучени.
+- За тврда месечна граница низ рестартирања и повеќе серверски инстанци е потребен траен заеднички quota store. Обичен бројач во меморијата не е доволна заштита.
