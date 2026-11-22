@@ -23,7 +23,7 @@ export const ZLATKO_ARCHITECTURE = Object.freeze({
     websiteSlotsPerComputer: 1000,
     totalWebsiteAssignments: 200000000000,
     websiteRegistryCapacity: 1000,
-    reviewedWebsiteCount: 32,
+    reviewedWebsiteCount: 31,
     internetSearchEnabledByDefault: false,
     isProvisionedInfrastructure: false,
   },
