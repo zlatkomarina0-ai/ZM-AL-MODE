@@ -11,18 +11,6 @@ const ALLOWED_ORIGINS = new Set(
     .split(",").map((origin) => origin.trim()).filter(Boolean),
 );
 
-const PROVIDER_CONFIG = [
-  { id: "openai", keyName: "OPENAI_API_KEY", modelName: "OPENAI_MODEL", model: "gpt-4o-mini", endpoint: "https://api.openai.com/v1/chat/completions" },
-  { id: "claude", keyName: "ANTHROPIC_API_KEY", modelName: "ANTHROPIC_MODEL", model: "claude-3-5-haiku-latest", style: "anthropic", endpoint: "https://api.anthropic.com/v1/messages" },
-  { id: "deepseek", keyName: "DEEPSEEK_API_KEY", modelName: "DEEPSEEK_MODEL", model: "deepseek-chat", endpoint: "https://api.deepseek.com/chat/completions" },
-  { id: "gemini", keyName: "GEMINI_API_KEY", modelName: "GEMINI_MODEL", model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" },
-  { id: "groq", keyName: "GROQ_API_KEY", modelName: "GROQ_MODEL", model: "llama-3.3-70b-versatile", endpoint: "https://api.groq.com/openai/v1/chat/completions" },
-  { id: "mistral", keyName: "MISTRAL_API_KEY", modelName: "MISTRAL_MODEL", model: "mistral-small-latest", endpoint: "https://api.mistral.ai/v1/chat/completions" },
-  { id: "xai", keyName: "XAI_API_KEY", modelName: "XAI_MODEL", model: "grok-3-mini", endpoint: "https://api.x.ai/v1/chat/completions" },
-  { id: "openrouter", keyName: "OPENROUTER_API_KEY", modelName: "OPENROUTER_MODEL", model: "openai/gpt-4o-mini", endpoint: "https://openrouter.ai/api/v1/chat/completions" },
-  { id: "cerebras", keyName: "CEREBRAS_API_KEY", modelName: "CEREBRAS_MODEL", model: "llama-3.3-70b", endpoint: "https://api.cerebras.ai/v1/chat/completions" },
-  { id: "together", keyName: "TOGETHER_API_KEY", modelName: "TOGETHER_MODEL", model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", endpoint: "https://api.together.xyz/v1/chat/completions" },
-];
 
 function send(res, status, data, headers = {}) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", ...headers });
