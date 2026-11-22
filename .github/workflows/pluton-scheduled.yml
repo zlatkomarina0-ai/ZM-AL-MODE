@@ -1,0 +1,45 @@
+name: PLUTON scheduled bulletin
+
+on:
+  schedule:
+    # North Macedonia is UTC+1 in winter and UTC+2 in summer.
+    # The runner checks Europe/Skopje local time and skips the off-season UTC slot.
+    - cron: '30 5,6 * * 2,5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pluton-scheduled-bulletin
+  cancel-in-progress: false
+
+jobs:
+  process-bulletin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test local PLUTON runner
+        run: node --test scripts/pluton-scheduled.test.mjs
+
+      - name: Process bulletin (no provider API calls)
+        env:
+          PLUTON_BULLETIN_PATH: data/bulletin.json
+          PLUTON_OUTPUT_DIR: artifacts
+        run: node scripts/pluton-scheduled.mjs
+
+      - name: Upload report artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pluton-bulletin-report-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
