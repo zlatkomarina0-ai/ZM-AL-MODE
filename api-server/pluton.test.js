@@ -164,3 +164,22 @@ test("ARSENAL only approves reviewed starter domains for automated fetch", () =>
   assert.equal(unknown.inStarterAllowlist, false);
   assert.equal(unknown.allowedForAutomatedFetch, false);
 });
+
+
+test("ZLATKO architecture keeps card capacities and Joker 1 inventory explicit", async () => {
+  const result = runPluton({ operation: "architecture" });
+  assert.equal(result.ok, true);
+  assert.equal(result.networkCalls, 0);
+  assert.equal(result.architecture.chiefProfiles.count, 1000);
+  assert.equal(result.architecture.aceOfClubs.logicalWorkerUnitsPerProfile, 2000000);
+  assert.equal(result.architecture.aceOfClubs.totalLogicalWorkerUnits, 2000000000);
+  assert.equal(result.architecture.aceOfDiamonds.logicalComputerSlots, 200000000);
+  assert.equal(result.architecture.aceOfDiamonds.websiteSlotsPerComputer, 1000);
+  assert.equal(result.architecture.aceOfDiamonds.totalWebsiteAssignments, 200000000000);
+  assert.equal(result.architecture.aceOfSpades.sharedLocalCodeModules, 30);
+  assert.equal(result.architecture.aceOfSpades.externalApiCalls, false);
+  assert.equal(result.architecture.joker1.agentFirmSlots, 100);
+  assert.equal(result.architecture.joker1.ordinaryModelSlots, 30);
+  assert.equal(result.architecture.joker1.integrationsEnabledByDefault, false);
+  assert.equal(result.architecture.joker2.status, "reserved");
+});
