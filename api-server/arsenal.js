@@ -74,7 +74,7 @@ const TRUSTED_STARTER_SITES = [
   { domain: "ec.europa.eu", category: "public-information", trust: "official-government" },
 ];
 
-const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/i;
+const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
 export function listArsenalSites() {
   return TRUSTED_STARTER_SITES.map((site) => ({ ...site }));
@@ -104,7 +104,7 @@ export function runArsenal(payload = {}) {
 
   if (operation === "validateDomain") {
     const raw = typeof payload.domain === "string" ? payload.domain.trim() : "";
-    const candidate = raw.replace(/^https?:\\/\\//i, "").split(/[/?#]/)[0].replace(/:\\d+$/, "");
+        const candidate = raw.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].replace(/:\d+$/, "");
     const allowed = TRUSTED_STARTER_SITES.some((site) => site.domain === candidate || site.domain.endsWith("/" + candidate));
     return {
       ok: true,
