@@ -6,14 +6,14 @@ PLUTON must not call external AI providers or third-party APIs. There is no auto
 
 ## Local engine
 
-- 100 registered agent IDs: `pluton-agent-001` through `pluton-agent-100`
+- 1,000 registered agent IDs: `pluton-agent-0001` through `pluton-agent-1000`
 - 30 deterministic local code modules, shared by the agent profiles
-- Up to 3,000 possible agent-to-code assignments
+- Up to 30,000 possible agent-to-code assignments
 - Tasks execute only when explicitly included in a `fleet` payload
 - Unknown agent IDs and unknown code IDs are rejected
 - Each task result reports `networkCalls: 0`
 
-The implementations are shared to avoid storing 3,000 duplicate programs. The number 3,000 is assignment capacity, not 3,000 separate running processes.
+The implementations are shared to avoid storing 3,000 duplicate programs. The number 30,000 is assignment capacity, not 30,000 separate running processes.
 
 ## Local server routes
 
