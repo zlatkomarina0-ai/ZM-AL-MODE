@@ -1,5 +1,15 @@
 import { countJoker2Bands, JOKER2_BANDS, JOKER2_TOTAL_PLANNED_WORKERS, scanMatchCoefficients } from './pluton-joker2';
 import {
+  createPikovaProject,
+  createPikovaState,
+  enqueuePikovaTask,
+  getPikovaOverview,
+  getPikovaProjectView,
+  grantPikovaRole,
+  processPikovaQueue,
+  retryPikovaFailures,
+} from './pluton-pikova-dama';
+import {
   clearCompletedTasks,
   exportReport,
   getPlutonState,
@@ -105,6 +115,44 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
         </div>
         <p id="pluton-engine-message" class="pluton-message" role="status"></p>
         <p class="pluton-small">Локалното зачувување е во овој прелистувач и не се синхронизира автоматски со друг телефон, GitHub или AppSheet. CSV-извозот е мост за рачен увоз, не автоматска конекција.</p>
+      </section>
+      <section class="pluton-card" id="pluton-pikova-dama">
+        <h3>ПИКОВА ДАМА ♠ — безбедни проекти за AS PIK</h3>
+        <span class="pluton-badge">ЛОКАЛНО · ИЗОЛИРАНИ ПРОЕКТИ</span>
+        <p class="pluton-intro">Посебна надградба: до 1.000 проекти, по 100 логички Плутони. Локална обработка и дневник на активности; нема плаќања, обложување или надворешни API повици.</p>
+        <div class="pluton-stats">
+          <div class="pluton-stat"><span>Проекти во овој прелистувач</span><strong id="pikova-project-count">0</strong></div>
+          <div class="pluton-stat"><span>Распределени Плутони</span><strong id="pikova-pluton-count">0</strong></div>
+          <div class="pluton-stat"><span>Цел проекти</span><strong>1.000</strong></div>
+          <div class="pluton-stat"><span>Цел Плутони</span><strong>100.000</strong></div>
+        </div>
+        <label for="pikova-project-name" class="pluton-small">Име на нов проект</label>
+        <input id="pikova-project-name" type="text" maxlength="160" placeholder="На пр. Проект 001">
+        <div class="pluton-actions"><button id="pikova-create-project" class="pluton-btn primary">Креирај проект</button></div>
+        <label for="pikova-project-select" class="pluton-small">Избери проект</label>
+        <select id="pikova-project-select"><option value="">Нема проекти</option></select>
+        <label for="pikova-task-title" class="pluton-small">Наслов на задача</label>
+        <input id="pikova-task-title" type="text" maxlength="160" placeholder="Наслов / референца">
+        <label for="pikova-idempotency" class="pluton-small">Уникатен клуч на задача</label>
+        <input id="pikova-idempotency" type="text" maxlength="200" placeholder="На пр. MATCH-001-review">
+        <label for="pikova-task-payload" class="pluton-small">Податоци на задачата (JSON објект)</label>
+        <textarea id="pikova-task-payload" spellcheck="false" placeholder='{"matchId":"MATCH-001","notes":"локална проверка"}'></textarea>
+        <div class="pluton-actions">
+          <button id="pikova-enqueue" class="pluton-btn">Додај задача</button>
+          <button id="pikova-process" class="pluton-btn primary">Обработи проект</button>
+          <button id="pikova-retry" class="pluton-btn">Повтори грешки</button>
+          <button id="pikova-export" class="pluton-btn">Извези дневник JSON</button>
+        </div>
+        <div class="pluton-card">
+          <h4>Контрола на пристап</h4>
+          <p class="pluton-small">Додај член со локален ID и улога. Ова е контрола на работниот тек во прелистувачот, не замена за серверска автентикација.</p>
+          <input id="pikova-member-id" type="text" maxlength="120" placeholder="ID на член">
+          <select id="pikova-member-role"><option value="operator">Оператор — работа</option><option value="viewer">Читач — само преглед</option></select>
+          <div class="pluton-actions"><button id="pikova-grant-role" class="pluton-btn">Додели улога</button></div>
+        </div>
+        <p id="pikova-message" class="pluton-message" role="status"></p>
+        <p class="pluton-small">Зачувувањето е локално на овој уред/прелистувач. За вистинска безбедност меѓу корисници потребни се серверска автентикација, серверска авторизација и база на податоци; оваа верзија не ги симулира како веќе активни услуги.</p>
+        <div class="pluton-table-wrap"><table><thead><tr><th>Задача</th><th>Статус</th><th>Обиди</th><th>Резултат</th></tr></thead><tbody id="pikova-task-rows"><tr><td colspan="4">Избери или креирај проект.</td></tr></tbody></table></div>
       </section>
       <section class="pluton-card" id="pluton-joker2">
         <h3>JOKER 2 ♣ — паралелна линија за коефициенти</h3>
@@ -352,6 +400,137 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     message('pluton-engine-message', 'CSV е извезен за рачен увоз во Google Sheets/AppSheet. Автоматска синхронизација не е активна.');
   });
 
+
+  const PIKOVA_STORAGE_KEY = 'zlatko.pikova-dama.state.v1';
+  const PIKOVA_ACTOR = { id: 'local-owner', role: 'owner' as const };
+  let pikovaState = createPikovaState();
+  let pikovaSelectedProject = '';
+  try {
+    const saved = localStorage.getItem(PIKOVA_STORAGE_KEY);
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved);
+      if (typeof parsed === 'object' && parsed !== null && 'version' in parsed && parsed.version === 1 &&
+          'projects' in parsed && Array.isArray(parsed.projects) && 'tasks' in parsed && Array.isArray(parsed.tasks) &&
+          'audit' in parsed && Array.isArray(parsed.audit)) {
+        pikovaState = parsed as typeof pikovaState;
+      }
+    }
+  } catch {
+    pikovaState = createPikovaState();
+  }
+
+  function savePikova(): void {
+    try {
+      localStorage.setItem(PIKOVA_STORAGE_KEY, JSON.stringify(pikovaState));
+    } catch {
+      message('pikova-message', 'Не може да се зачува во локалниот прелистувач. Извези го дневникот.', true);
+    }
+  }
+
+  function renderPikova(): void {
+    const overview = getPikovaOverview(pikovaState, PIKOVA_ACTOR);
+    document.getElementById('pikova-project-count')!.textContent = String(overview.projectCount);
+    document.getElementById('pikova-pluton-count')!.textContent = overview.allocatedPlutons.toLocaleString('en-US');
+    const select = document.getElementById('pikova-project-select') as HTMLSelectElement;
+    const previous = pikovaSelectedProject || select.value;
+    select.innerHTML = overview.projects.length
+      ? overview.projects.map(project => '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name) + ' · ' + project.plutonAllocation + ' Плутони</option>').join('')
+      : '<option value="">Нема проекти</option>';
+    if (overview.projects.some(project => project.id === previous)) select.value = previous;
+    pikovaSelectedProject = select.value;
+    const body = document.getElementById('pikova-task-rows')!;
+    if (!pikovaSelectedProject) {
+      body.innerHTML = '<tr><td colspan="4">Креирај проект за да започнеш.</td></tr>';
+      return;
+    }
+    const view = getPikovaProjectView(pikovaState, PIKOVA_ACTOR, pikovaSelectedProject);
+    body.innerHTML = view.tasks.slice(-50).reverse().map(task => {
+      const result = task.result?.summary ?? task.error ?? 'Чека';
+      return '<tr><td>' + escapeHtml(task.title) + '<div class="pluton-small">' + escapeHtml(task.id.slice(0, 8)) + '</div></td><td><span class="pluton-status ' + task.status + '">' + escapeHtml(task.status) + '</span></td><td>' + task.attempts + '</td><td>' + escapeHtml(result) + '</td></tr>';
+    }).join('') || '<tr><td colspan="4">Нема задачи во овој проект.</td></tr>';
+  }
+
+  document.getElementById('pikova-create-project')!.addEventListener('click', () => {
+    try {
+      const name = (document.getElementById('pikova-project-name') as HTMLInputElement).value;
+      const project = createPikovaProject(pikovaState, PIKOVA_ACTOR, name);
+      pikovaSelectedProject = project.id;
+      savePikova();
+      renderPikova();
+      message('pikova-message', 'Креиран е изолиран проект: ' + project.name + '. Распределба: 100 логички Плутони.');
+    } catch (error) {
+      message('pikova-message', error instanceof Error ? error.message : 'Грешка при креирање проект.', true);
+    }
+  });
+
+  document.getElementById('pikova-project-select')!.addEventListener('change', event => {
+    pikovaSelectedProject = (event.currentTarget as HTMLSelectElement).value;
+    renderPikova();
+  });
+
+  document.getElementById('pikova-enqueue')!.addEventListener('click', () => {
+    try {
+      if (!pikovaSelectedProject) throw new Error('Прво креирај или избери проект.');
+      const title = (document.getElementById('pikova-task-title') as HTMLInputElement).value;
+      const keyInput = document.getElementById('pikova-idempotency') as HTMLInputElement;
+      const key = keyInput.value.trim() || title.trim();
+      const payloadText = (document.getElementById('pikova-task-payload') as HTMLTextAreaElement).value.trim() || '{}';
+      const payload: unknown = JSON.parse(payloadText);
+      if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) throw new Error('Податоците мора да бидат JSON објект.');
+      const result = enqueuePikovaTask(pikovaState, PIKOVA_ACTOR, pikovaSelectedProject, title, payload as Record<string, unknown>, key);
+      savePikova();
+      renderPikova();
+      message('pikova-message', result.duplicate ? 'Дупликатот е спречен. Постои задача со истиот клуч во овој проект.' : 'Задачата е додадена во локалната редица.');
+    } catch (error) {
+      message('pikova-message', error instanceof Error ? error.message : 'Неуспешно додавање задача.', true);
+    }
+  });
+
+  document.getElementById('pikova-process')!.addEventListener('click', () => {
+    try {
+      if (!pikovaSelectedProject) throw new Error('Прво избери проект.');
+      const result = processPikovaQueue(pikovaState, PIKOVA_ACTOR, pikovaSelectedProject);
+      savePikova();
+      renderPikova();
+      message('pikova-message', 'Обработени: ' + result.done + '; грешки: ' + result.failed + '; останати: ' + result.remaining + '. Само локална валидација, не прогноза.');
+    } catch (error) {
+      message('pikova-message', error instanceof Error ? error.message : 'Грешка при обработка.', true);
+    }
+  });
+
+  document.getElementById('pikova-retry')!.addEventListener('click', () => {
+    try {
+      if (!pikovaSelectedProject) throw new Error('Прво избери проект.');
+      const count = retryPikovaFailures(pikovaState, PIKOVA_ACTOR, pikovaSelectedProject);
+      savePikova();
+      renderPikova();
+      message('pikova-message', 'Вратени во редица: ' + count + '. Максимум три обиди по задача.');
+    } catch (error) {
+      message('pikova-message', error instanceof Error ? error.message : 'Грешка при повторување.', true);
+    }
+  });
+
+  document.getElementById('pikova-grant-role')!.addEventListener('click', () => {
+    try {
+      if (!pikovaSelectedProject) throw new Error('Прво избери проект.');
+      const memberId = (document.getElementById('pikova-member-id') as HTMLInputElement).value;
+      const role = (document.getElementById('pikova-member-role') as HTMLSelectElement).value as 'operator' | 'viewer';
+      grantPikovaRole(pikovaState, PIKOVA_ACTOR, pikovaSelectedProject, memberId, role);
+      savePikova();
+      renderPikova();
+      message('pikova-message', 'Улогата ' + role + ' е доделена на ' + memberId.trim() + ' за избраниот проект.');
+    } catch (error) {
+      message('pikova-message', error instanceof Error ? error.message : 'Грешка при доделување улога.', true);
+    }
+  });
+
+  document.getElementById('pikova-export')!.addEventListener('click', () => {
+    download('zlatko-pikova-dama-audit-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(pikovaState, null, 2), 'application/json;charset=utf-8');
+    message('pikova-message', 'PIKOVA DAMA проектите, задачите и дневникот се извезени во JSON.');
+  });
+
+  document.getElementById('pikova-project-count')!.textContent = '0';
+  renderPikova();
 
   document.getElementById('joker2-scan')!.addEventListener('click', () => {
     const tasks = getPlutonState().tasks;

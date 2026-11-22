@@ -35,3 +35,13 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - The PLUTON UI can classify coefficients from imported match tasks, show band counts and export a CSV report.
 - These are logical architecture targets only. No live workers/computers/web crawlers are provisioned; no external AI provider calls are made.
 - Design details: `docs/joker-2-coefficient-line.md`.
+
+
+## PIKOVA DAMA ♠ — independent AS PIK secure-workspace upgrade
+- Separate from JOKER 2; no dependency on the coefficient classifier.
+- Target: 1,000 projects × 100 logical Plutons each = 100,000 logical Plutons. These are planned allocations, not active workers or machines.
+- Added src/pluton-pikova-dama.ts: isolated project/task views, owner/operator/viewer roles, input validation, project-scoped idempotency, bounded audit events, local deterministic processing, and retry capped at three attempts.
+- Added a PIKOVA DAMA UI panel with local project creation, task queue, project processing, role assignment, and JSON audit/state export. Data stays in this browser's localStorage unless exported manually.
+- No paid services, provider API calls, live betting actions, or AI-generated predictions are used.
+- Security boundary: browser-side roles are workflow controls, not server-grade authentication. Real multi-user security requires server-side authentication/authorization, persistent shared storage, and server-side audit logging; those are not implemented by this module.
+- Tests: scripts/pikova-dama.test.mjs; run via npm run test:pluton. Design: docs/pikova-dama-secure-workspaces.md.
