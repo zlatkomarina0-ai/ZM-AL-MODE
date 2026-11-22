@@ -2,7 +2,7 @@
  * PLUTON — local-first deterministic task engine.
  * This module never makes network requests and never calls an AI provider.
  */
-const MAX_ITEMS = 5000;
+import { runPlutonFleet, PLUTON_CODE_IDS, PLUTON_AGENT_COUNT, PLUTON_CODES_PER_AGENT, PLUTON_MAX_AGENT_CODE_ASSIGNMENTS } from "./pluton-fleet.js";\n\nconst MAX_ITEMS = 5000;
 const MAX_TEXT = 12000;
 
 function requireArray(value, label = "data") {
@@ -109,7 +109,7 @@ export function runPluton(payload = {}) {
         engine: "PLUTON",
         operation: operation || null,
         error: "Unsupported local operation. No API was called.",
-        supportedOperations: ["health", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
+        supportedOperations: ["health", "listCodes", "fleet", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
         networkCalls: 0,
       };
   }
