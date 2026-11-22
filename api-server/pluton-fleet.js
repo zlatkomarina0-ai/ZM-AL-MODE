@@ -1,11 +1,11 @@
 /**
  * PLUTON — local-only code fleet.
  * No provider SDKs, API keys, network requests, or paid inference.
- * Each of 100 agent profiles can select from 30 deterministic local code modules.
+ * Each of 1,000 agent profiles can select from 30 deterministic local code modules.
  * Modules are shared implementations to conserve storage; execution is on demand.
  */
 
-const MAX_AGENTS = 100;
+const MAX_AGENTS = 1000;
 const CODES_PER_AGENT = 30;
 const MAX_TASKS = 5000;
 const cleanText = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
@@ -111,7 +111,7 @@ export const PLUTON_CODEBOOK = Object.freeze({
 export const PLUTON_AGENT_COUNT = MAX_AGENTS;
 export const PLUTON_CODES_PER_AGENT = CODES_PER_AGENT;
 export const PLUTON_MAX_AGENT_CODE_ASSIGNMENTS = MAX_AGENTS * CODES_PER_AGENT;
-export const PLUTON_AGENT_IDS = Object.freeze(Array.from({ length: MAX_AGENTS }, (_, i) => "pluton-agent-" + String(i + 1).padStart(3, "0")));
+export const PLUTON_AGENT_IDS = Object.freeze(Array.from({ length: MAX_AGENTS }, (_, i) => "pluton-agent-" + String(i + 1).padStart(4, "0")));
 export const PLUTON_CODE_IDS = Object.freeze(Object.keys(PLUTON_CODEBOOK));
 
 export function runPlutonFleet(payload = {}) {
