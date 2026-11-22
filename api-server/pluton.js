@@ -4,6 +4,7 @@
  */
 import { runPlutonFleet, PLUTON_CODE_IDS } from "./pluton-fleet.js";
 import { runZamka } from "./zamka.js";
+import { runKaro } from "./karo.js";
 
 const MAX_ITEMS = 5000;
 const MAX_TEXT = 12000;
@@ -48,6 +49,9 @@ export function runPluton(payload = {}) {
 
     case "zamka":
       return runZamka(payload);
+
+    case "karo":
+      return runKaro(payload);
 
     case "normalize":
       if (typeof data === "string") {
@@ -121,7 +125,7 @@ export function runPluton(payload = {}) {
         engine: "PLUTON",
         operation: operation || null,
         error: "Unsupported local operation. No API was called.",
-        supportedOperations: ["health", "listCodes", "fleet", "zamka", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
+        supportedOperations: ["health", "listCodes", "fleet", "zamka", "karo", "normalize", "deduplicate", "compare", "validateTeams", "mockApi"],
         networkCalls: 0,
       };
   }
