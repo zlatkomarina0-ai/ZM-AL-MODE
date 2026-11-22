@@ -77,7 +77,7 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
         <h3>1. Внес на билтен</h3>
         <p class="pluton-intro">Може да внесеш JSON билтен или суров SportLife текст. Суровиот текст се чита преку постојниот локален парсер на апликацијата, ако препознае мечеви.</p>
         <label for="pluton-format" class="pluton-small">Формат на влез</label>
-        <select id="pluton-format"><option value="sportlife">Суров SportLife текст</option><option value="json">JSON билтен</option></select>
+        <select id="pluton-format"><option value="sportlife">Суров SportLife текст</option><option value="json">JSON билтен</option><option value="csv">CSV датотека (AppSheet/Sheets)</option></select>
         <label for="pluton-chiefs" class="pluton-small">Број на логички шефови</label>
         <select id="pluton-chiefs"><option value="100">100 шефови</option><option value="400" selected>400 шефови</option><option value="1000">1000 шефови</option></select>
         <textarea id="pluton-input" spellcheck="false" placeholder="Вметни го билтенот тука..."></textarea>
@@ -164,6 +164,46 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     return '"' + safe.replace(/"/g, '""') + '"';
   }
 
+  function parseCsvRecords(text: string): Record<string, unknown>[] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let quoted = false;
+    for (let i = 0; i < text.length; i += 1) {
+      const char = text[i];
+      if (quoted) {
+        if (char === '"' && text[i + 1] === '"') { cell += '"'; i += 1; }
+        else if (char === '"') quoted = false;
+        else cell += char;
+      } else if (char === '"' && cell.length === 0) quoted = true;
+      else if (char === ',') { row.push(cell); cell = ''; }
+      else if (char === '\\n') { row.push(cell.replace(/\\r$/, '')); rows.push(row); row = []; cell = ''; }
+      else cell += char;
+    }
+    if (quoted) throw new Error('CSV има незатворени наводници.');
+    if (cell.length || row.length) { row.push(cell.replace(/\\r$/, '')); rows.push(row); }
+    const nonEmpty = rows.filter(cells => cells.some(value => value.trim() !== ''));
+    if (nonEmpty.length < 2) throw new Error('CSV мора да содржи заглавие и најмалку еден ред.');
+    const normalize = (value: string) => value.replace(/^\\uFEFF/, '').trim().toLowerCase().replace(/[\\s_-]+/g, '');
+    const headers = nonEmpty[0].map(normalize);
+    const homeAliases = ['hometeam', 'home', 'hometeamname', 'domakin', 'domakjin', 'domaќin'.toLowerCase()];
+    const awayAliases = ['awayteam', 'away', 'awayteamname', 'gosti', 'gostin', 'gost'];
+    const homeIndex = headers.findIndex(header => homeAliases.includes(header));
+    const awayIndex = headers.findIndex(header => awayAliases.includes(header));
+    if (homeIndex < 0 || awayIndex < 0) {
+      throw new Error('CSV заглавието мора да содржи homeTeam/awayTeam или domakin/gosti.');
+    }
+    const matchIndex = headers.findIndex(header => ['matchid', 'sifra', 'matchcode', 'id'].includes(header));
+    return nonEmpty.slice(1).map(cells => {
+      const record: Record<string, unknown> = {};
+      headers.forEach((header, index) => { if (header) record[header] = (cells[index] ?? '').trim(); });
+      const homeTeam = (cells[homeIndex] ?? '').trim();
+      const awayTeam = (cells[awayIndex] ?? '').trim();
+      const matchId = matchIndex >= 0 ? (cells[matchIndex] ?? '').trim() : '';
+      return { ...record, homeTeam, awayTeam, ...(matchId ? { matchId } : {}) };
+    });
+  }
+
   function render(): void {
     const tasks = getPlutonState().tasks;
     document.getElementById('pluton-total')!.textContent = String(tasks.length);
@@ -189,7 +229,7 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     const reader = new FileReader();
     reader.onload = () => {
       input.value = String(reader.result ?? '');
-      format.value = file.name.toLowerCase().endsWith('.json') ? 'json' : 'sportlife';
+      format.value = file.name.toLowerCase().endsWith('.json') ? 'json' : file.name.toLowerCase().endsWith('.csv') ? 'csv' : 'sportlife';
       message('pluton-input-message', `Вчитана датотека: ${file.name}`);
     };
     reader.onerror = () => message('pluton-input-message', 'Не успеав да ја прочитам датотеката.', true);
@@ -209,7 +249,7 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
     try {
       let jsonInput = input.value;
       if (format.value === 'sportlife') {
-        if (!window.parsirajSportLife) throw new Error('Постојниот SportLife парсер не е достапен. Избери JSON формат.');
+        if (!window.parsirajSportLife) throw new Error('Постојниот SportLife парсер не е достапен. Избери JSON или CSV формат.');
         const parsed = window.parsirajSportLife(input.value);
         const matches = parsed.map((item, index) => ({
           ...item,
@@ -218,6 +258,8 @@ if (mainContent && bottomNav && !document.getElementById('tab-pluton')) {
           awayTeam: item.gosti,
         }));
         jsonInput = JSON.stringify({ matches });
+      } else if (format.value === 'csv') {
+        jsonInput = JSON.stringify({ matches: parseCsvRecords(input.value) });
       }
       const result = importBulletin(jsonInput, Number(chiefs.value));
       message('pluton-input-message', `Внесени: ${result.imported}; прескокнати записи: ${result.skipped}. Распределбата е локална.`, result.imported === 0);
