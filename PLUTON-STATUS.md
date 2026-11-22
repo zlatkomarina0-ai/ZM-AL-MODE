@@ -45,3 +45,12 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - No paid services, provider API calls, live betting actions, or AI-generated predictions are used.
 - Security boundary: browser-side roles are workflow controls, not server-grade authentication. Real multi-user security requires server-side authentication/authorization, persistent shared storage, and server-side audit logging; those are not implemented by this module.
 - Tests: scripts/pikova-dama.test.mjs; run via npm run test:pluton. Design: docs/pikova-dama-secure-workspaces.md.
+
+
+## DAMA TREF ♣ — input-only security policy (initial implementation)
+- Added `src/pluton-dama-tref.ts`: exact-host HTTPS URL validation, default-deny outbound decision policy, role/action checks for admin/chief/worker/auditor, input size/type checks, heuristic quarantine of active HTML patterns, and bounded audit helper.
+- Added `scripts/dama-tref.test.mjs` and included it in `npm run test:pluton`.
+- The module makes no network requests. Source URLs can be validated, but source websites are not downloaded or stored by this change.
+- Important boundary: this is client/library policy, not an enforced firewall, malware-signature antivirus, sandbox, or server-side authentication. Production requires trusted server/network enforcement, safe DNS/redirect handling, real file scanning, persistent server-side audit, and adversarial tests.
+- Free-only: no new paid dependency or AI API call.
+- Design: `docs/dama-tref-input-only-security.md`.
