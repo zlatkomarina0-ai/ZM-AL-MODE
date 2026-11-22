@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:pluton": "node --test scripts/pluton-scheduled.test.mjs",
+    "pluton:scheduled": "node scripts/pluton-scheduled.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.0",
