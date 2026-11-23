@@ -62,9 +62,10 @@ export function validateDamaTrefSourceUrl(input: string, allowedHosts: readonly 
   return url.toString();
 }
 /** Default deny. A trusted server must enforce this before opening a socket. */
-export function decideDamaTrefRequest(input: { action: DamaTrefAction; method?: string; url?: string; allowedHosts?: readonly string[]; hasPrivatePayload?: boolean }): DamaTrefDecision {
+export function decideDamaTrefRequest(input: { action: DamaTrefAction; method?: string; url?: string; allowedHosts?: readonly string[]; hasBody?: boolean; hasPrivatePayload?: boolean }): DamaTrefDecision {
   if (input.action !== 'source-fetch') return { allowed: false, reason: 'Default-deny: outbound transfer is not an approved source read.', auditedAction: input.action };
   if ((input.method ?? 'GET').toUpperCase() !== 'GET') return { allowed: false, reason: 'Only GET is permitted for source acquisition.', auditedAction: input.action };
+  if (input.hasBody) return { allowed: false, reason: 'Source acquisition requests must not contain a request body.', auditedAction: input.action };
   if (input.hasPrivatePayload) return { allowed: false, reason: 'Source acquisition must not carry internal/private payload data.', auditedAction: input.action };
   try {
     validateDamaTrefSourceUrl(input.url ?? '', input.allowedHosts ?? []);

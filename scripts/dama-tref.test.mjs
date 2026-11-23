@@ -23,6 +23,8 @@ test('default-denies outbound transfer except approved source GET intent', () =>
   assert.equal(decideDamaTrefRequest({ action: 'external-api' }).allowed, false);
   assert.equal(decideDamaTrefRequest({ action: 'export-data' }).allowed, false);
   assert.equal(decideDamaTrefRequest({ action: 'source-fetch', method: 'POST', url: 'https://example.com', allowedHosts: ['example.com'] }).allowed, false);
+  assert.equal(decideDamaTrefRequest({ action: 'source-fetch', hasBody: true, url: 'https://example.com', allowedHosts: ['example.com'] }).allowed, false);
+  assert.equal(decideDamaTrefRequest({ action: 'source-fetch', hasBody: false, url: 'https://example.com', allowedHosts: ['example.com'] }).allowed, true);
   assert.equal(decideDamaTrefRequest({ action: 'source-fetch', url: 'https://example.com', allowedHosts: ['example.com'], hasPrivatePayload: true }).allowed, false);
   assert.equal(decideDamaTrefRequest({ action: 'source-fetch', url: 'https://example.com', allowedHosts: ['example.com'] }).allowed, true);
 });
