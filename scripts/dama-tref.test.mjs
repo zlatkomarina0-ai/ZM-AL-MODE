@@ -14,6 +14,10 @@ test('accepts only HTTPS URLs on an exact allowlist', () => {
   assert.throws(() => validateDamaTrefSourceUrl('https://example.123', ['example.123']), /DNS hostnames|invalid/i);
   assert.throws(() => validateDamaTrefSourceUrl('https://localhost', ['localhost']), /DNS hostnames|Private/);
   assert.throws(() => validateDamaTrefSourceUrl('https://example.com:8443', ['example.com']), /port/);
+  assert.throws(() => validateDamaTrefSourceUrl('https://example.com', ['127.0.0.1']), /valid public DNS hostnames|IP literals|Private/);
+  assert.throws(() => validateDamaTrefSourceUrl('https://example.com', ['bad..example.com']), /valid public DNS hostnames|malformed labels/);
+  assert.throws(() => validateDamaTrefSourceUrl('https://example.com', ['example.123']), /valid public DNS hostnames|malformed labels/);
+  assert.equal(validateDamaTrefSourceUrl('https://example.com', ['EXAMPLE.COM.']), 'https://example.com/');
 });
 test('default-denies outbound transfer except approved source GET intent', () => {
   assert.equal(decideDamaTrefRequest({ action: 'external-api' }).allowed, false);
