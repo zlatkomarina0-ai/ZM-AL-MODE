@@ -57,6 +57,12 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 
 
 
+## DAMA TREF ♣ — bodyless source-read policy follow-up
+- The request-decision helper now explicitly rejects source GET requests marked as carrying a body, in addition to blocking non-GET methods and private/internal payloads.
+- Regression tests cover body-present and body-absent cases. This is still a policy decision helper; a trusted network service must enforce the actual request shape.
+
+
+
 ## DAMA TREF ♣ — strict allowlist validation follow-up
 - Validates every source allowlist entry as a syntactically valid public DNS hostname, not only the requested URL hostname.
 - Rejects IP literals, malformed labels, numeric top-level labels, wildcards, and URL-like allowlist entries; accepts case-insensitive names and a trailing DNS dot after normalization.
