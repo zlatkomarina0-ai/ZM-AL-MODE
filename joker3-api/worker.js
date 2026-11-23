@@ -116,7 +116,12 @@ async function geminiChatCompletion(request, origin, env) {
       return errorResponse('Gemini route is disabled until the Cloudflare rate-limit binding is configured.', 503, origin, 'gemini_rate_limit_not_configured');
     }
     const clientKey = request.headers.get('cf-connecting-ip') || 'unknown-client';
-    const allowance = await env.GEMINI_RATE_LIMITER.limit({ key: 'gemini:' + clientKey });
+    let allowance;
+    try {
+      allowance = await env.GEMINI_RATE_LIMITER.limit({ key: 'gemini:' + clientKey });
+    } catch {
+      return errorResponse('Gemini rate-limit check failed. Request blocked; no provider request was sent.', 503, origin, 'gemini_rate_limit_unavailable');
+    }
     if (!allowance || allowance.success !== true) {
       return errorResponse('Gemini request limit reached. Wait before trying again; no provider request was sent.', 429, origin, 'gemini_edge_rate_limited');
     }
