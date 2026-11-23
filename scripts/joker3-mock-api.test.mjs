@@ -125,3 +125,26 @@ test('request validation, CORS, methods and fixed upstream boundary are enforced
   assert.match(source, /const GEMINI_ENDPOINT = 'https:\/\/generativelanguage\.googleapis\.com/);
   assert.doesNotMatch(source, /WebSocket|connect\s*\(/);
 });
+
+test('Gemini proxy joins consecutive same-role messages with real line breaks', async () => {
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (_url, init) => {
+    captured = JSON.parse(init.body);
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: 'ok' }] }, finishReason: 'STOP' }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [
+        { role: 'user', content: 'first' },
+        { role: 'user', content: 'second' },
+      ] }),
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
+    assert.equal(response.status, 200);
+    assert.equal(captured.contents.length, 1);
+    assert.equal(captured.contents[0].parts[0].text, 'first\n\nsecond');
+  } finally { globalThis.fetch = originalFetch; }
+});
