@@ -98,7 +98,7 @@ async function geminiChatCompletion(request, origin, env) {
   const messages = parsed.body.messages;
   const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n').slice(0, MAX_MESSAGE_CHARS);
   const chatMessages = messages.filter(m => m.role !== 'system');
-  if (!chatMessages.some(m => m.role === 'user') || chatMessages[chatMessages.length - 1]?.role !== 'user') {
+  if (!chatMessages.some(m => m.role === 'user') || chatMessages[0]?.role !== 'user' || chatMessages[chatMessages.length - 1]?.role !== 'user') {
     return errorResponse('At least one user message is required and the latest message must be from the user.', 400, origin);
   }
   const failures = [];
