@@ -57,6 +57,13 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 
 
 
+## DAMA TREF ♣ — strict allowlist validation follow-up
+- Validates every source allowlist entry as a syntactically valid public DNS hostname, not only the requested URL hostname.
+- Rejects IP literals, malformed labels, numeric top-level labels, wildcards, and URL-like allowlist entries; accepts case-insensitive names and a trailing DNS dot after normalization.
+- Regression tests cover malformed/IP-based allowlist entries. This remains policy validation only and does not prevent DNS rebinding or enforce network isolation.
+
+
+
 ## DAMA TREF ♣ — boundary hardening follow-up
 - Hardened the health-only Cloudflare Worker with restrictive browser security headers, no-store caching, origin allowlisting, and explicit `outboundNetwork: false`.
 - Worker remains GET/OPTIONS-only; no website-fetch, proxy, upload, or AI API route is introduced.
