@@ -1,0 +1,96 @@
+name: ZLATKO AI MODE Saturday activation
+
+on:
+  schedule:
+    # 07:30 Europe/Skopje across winter/summer time; the guard skips the other UTC slot.
+    - cron: '30 5 * * 6'
+    - cron: '30 6 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zlatko-saturday-activation
+  cancel-in-progress: false
+
+jobs:
+  schedule-guard:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.guard.outputs.should_run }}
+    steps:
+      - name: Only activate at 07:30 Europe/Skopje on Saturdays
+        id: guard
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" != "schedule" ]]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node --input-type=module <<'NODE'
+          const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Europe/Skopje',
+            weekday: 'short',
+            hour: '2-digit',
+            hourCycle: 'h23',
+          }).formatToParts(new Date());
+          const values = Object.fromEntries(parts.map(p => [p.type, p.value]));
+          const shouldRun = values.weekday === 'Sat' && values.hour === '07';
+          console.log(`Skopje local time guard: ${values.weekday} ${values.hour}; activate=${shouldRun}`);
+          console.log(`should_run=${shouldRun}`);
+          await import('node:fs/promises').then(({ appendFile }) =>
+            appendFile(process.env.GITHUB_OUTPUT, `should_run=${shouldRun}\n`));
+          NODE
+
+  preflight-and-deploy:
+    needs: schedule-guard
+    if: needs.schedule-guard.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require server credentials without printing their values
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        shell: bash
+        run: |
+          missing=0
+          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
+            echo "::error::Missing repository secret CLOUDFLARE_API_TOKEN. No deployment was attempted."
+            missing=1
+          fi
+          if [[ -z "$GEMINI_API_KEY" ]]; then
+            echo "::error::Missing repository secret GEMINI_API_KEY. No deployment was attempted."
+            missing=1
+          fi
+          if [[ "$missing" -ne 0 ]]; then exit 1; fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run PLUTON and Worker regression tests
+        run: npm run test:pluton
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Deploy Worker and upload Gemini key as a Worker secret
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
+          secrets: |
+            GEMINI_API_KEY
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
