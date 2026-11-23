@@ -86,3 +86,5 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - No authentication, persistent storage, or real task execution. Do not send secrets or sensitive data; this is test-only and CORS is not authentication.
 - Tests added to `npm run test:pluton`. Design: `docs/joker-3-mock-api.md`.
 - Not deployed. A public endpoint will not exist until Cloudflare deployment is separately configured and verified; no token values belong in chat or source.
+
+- A separate manual-only deployment workflow is defined at `.github/workflows/deploy-joker3-mock-api.yml`; it has not been run. The existing Cloudflare token was previously invalid, so deployment remains blocked until the repository secret is repaired by the owner.
