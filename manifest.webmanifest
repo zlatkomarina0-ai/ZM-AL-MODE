@@ -1,0 +1,18 @@
+{
+  "name": "ZLATKO AI MODE",
+  "short_name": "ZM",
+  "description": "ZM Sports Hub and PLUTON CODE",
+  "start_url": "./sports.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07152f",
+  "theme_color": "#07152f",
+  "icons": [
+    {
+      "src": "./zm-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
