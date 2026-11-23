@@ -82,6 +82,10 @@ async function mockChatCompletion(request, origin) {
 async function geminiChatCompletion(request, origin, env) {
   const parsed = await readMessages(request, origin, 20);
   if (parsed.response) return parsed.response;
+  const initialChatMessages = parsed.body.messages.filter(m => m.role !== 'system');
+  if (!initialChatMessages.some(m => m.role === 'user') || initialChatMessages[0]?.role !== 'user' || initialChatMessages[initialChatMessages.length - 1]?.role !== 'user') {
+    return errorResponse('At least one user message is required and the latest message must be from the user; chat history must start with a user message.', 400, origin);
+  }
   if (!env || !env.GEMINI_RATE_LIMITER || typeof env.GEMINI_RATE_LIMITER.limit !== 'function') {
     return errorResponse('AI fallback is disabled until the Cloudflare rate-limit binding is configured.', 503, origin, 'ai_rate_limit_not_configured');
   }
