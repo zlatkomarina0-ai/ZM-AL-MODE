@@ -26,12 +26,14 @@ test('enforces least-privilege roles and blocks egress even for admin', () => {
   assert.equal(authorizeDamaTrefAction({ id: 'a1', role: 'auditor' }, 'submit-local-result').allowed, false);
   assert.equal(authorizeDamaTrefAction({ id: 'admin', role: 'admin' }, 'export-data').allowed, false);
   assert.equal(authorizeDamaTrefAction({ id: 'w1', role: 'worker' }, 'unknown').allowed, false);
+  assert.equal(authorizeDamaTrefAction({ id: 'admin', role: 'admin' }, 'unexpected-runtime-action').allowed, false);
 });
 test('quarantines active HTML and oversized/unsupported content', () => {
   assert.equal(inspectDamaTrefInput({ content: '{"ok":true}', contentType: 'application/json' }).accepted, true);
   const active = inspectDamaTrefInput({ content: '<script>alert(1)</script>', contentType: 'text/html' });
   assert.equal(active.accepted, false); assert.equal(active.quarantined, true);
   assert.equal(inspectDamaTrefInput({ content: 'x'.repeat(20), contentType: 'text/plain', maxBytes: 10 }).quarantined, true);
+  assert.equal(inspectDamaTrefInput({ content: 'x'.repeat(DAMA_TREF_MAX_INPUT_BYTES + 1), contentType: 'text/plain', maxBytes: DAMA_TREF_MAX_INPUT_BYTES * 2 }).quarantined, true);
   assert.equal(inspectDamaTrefInput({ content: 'x', contentType: 'application/octet-stream' }).accepted, false);
 });
 test('copies and bounds audit history', () => {
