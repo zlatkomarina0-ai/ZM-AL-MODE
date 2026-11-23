@@ -94,10 +94,3 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Verify deployed health endpoint
-        shell: bash
-        run: |
-          set -euo pipefail
-          endpoint="https://joker3-pluton-mock-api.<your-account-subdomain>.workers.dev/health"
-          echo "Worker deploy command completed. Replace the placeholder hostname with the actual Worker URL to enable this final HTTP check."
-          echo "No live Gemini request is sent during activation."
