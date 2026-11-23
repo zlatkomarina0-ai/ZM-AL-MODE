@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="mk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07152f">
+<meta name="description" content="ZLATKO AI MODE — спортски портал, F1, Реал Мадрид и работнички простор.">
+<title>ZLATKO AI MODE · ZM Sports Hub</title>
+<link rel="icon" type="image/svg+xml" href="./zm-icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{color-scheme:dark;--navy:#07152f;--panel:#0b1d3b;--panel2:#10284b;--gold:#d4af37;--gold2:#f0cf65;--text:#f7f8fc;--muted:#a6b6cd;--line:#29466c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:var(--navy);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body:before{content:"ZM";position:fixed;inset:0;display:grid;place-items:center;color:var(--gold);opacity:.055;font-size:clamp(15rem,42vw,42rem);font-weight:1000;letter-spacing:-.1em;transform:rotate(-12deg);pointer-events:none;z-index:0}
+a{color:var(--gold);text-decoration:none}button,textarea{font:inherit}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(7,21,47,.96);border-bottom:1px solid rgba(212,175,55,.35);backdrop-filter:blur(12px)}
+.brand{display:grid;place-items:center;width:48px;height:42px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-size:22px;font-weight:1000;letter-spacing:-.08em;flex-shrink:0}
+header h1{font-size:18px;margin:0;color:var(--gold);letter-spacing:.08em}header p{font-size:11px;color:var(--muted);margin:3px 0 0}
+main{width:min(1050px,100%);margin:auto;padding:18px 14px 100px;position:relative;z-index:1}
+.hero{border:1px solid rgba(212,175,55,.42);border-radius:18px;padding:24px 18px;background:linear-gradient(140deg,rgba(16,40,75,.98),rgba(7,21,47,.96));margin-bottom:16px}
+.kicker{color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.16em}.hero h2{font-size:clamp(30px,7vw,48px);line-height:1.08;margin:10px 0;color:var(--text)}.hero h2 span{color:var(--gold)}.hero p,.card p{color:var(--muted);font-size:14px;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{min-width:0;background:linear-gradient(145deg,rgba(11,29,59,.98),rgba(7,21,47,.96));border:1px solid rgba(212,175,55,.28);border-radius:14px;padding:15px;margin-bottom:10px}.card h3{color:var(--gold);font-size:17px;margin:6px 0}.card p{margin:7px 0}.tag{display:inline-block;color:var(--gold);border:1px solid rgba(212,175,55,.35);border-radius:999px;padding:4px 7px;font-size:9px;font-weight:800;letter-spacing:.08em}
+.action{display:inline-flex;align-items:center;justify-content:center;min-height:39px;margin-top:10px;padding:9px 12px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-size:12px;font-weight:850;background:rgba(212,175,55,.06)}.action.primary{background:var(--gold);color:var(--navy)}
+.page{display:none;animation:enter .18s ease}.page.active{display:block}@keyframes enter{from{opacity:.55;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-title{font-size:22px;margin:6px 0 15px;color:var(--gold)}.notice{padding:11px 12px;border-left:3px solid var(--gold);background:rgba(16,40,75,.72);color:var(--muted);font-size:12px;line-height:1.6;border-radius:0 8px 8px 0}
+textarea{width:100%;min-height:105px;resize:vertical;background:#061126;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;margin:10px 0}.task{border:1px solid var(--line);background:rgba(11,29,59,.9);border-radius:9px;padding:10px;margin-top:8px;font-size:13px;overflow-wrap:anywhere}.task small{display:block;color:var(--gold);font-weight:800;margin-bottom:5px}.task button{display:block;margin-top:8px}.calendar{padding:20px 16px;border:1px solid rgba(212,175,55,.3);border-radius:13px;background:rgba(11,29,59,.92)}
+nav{position:fixed;z-index:20;left:0;right:0;bottom:0;display:flex;gap:3px;overflow-x:auto;padding:8px 7px max(10px,env(safe-area-inset-bottom));background:rgba(7,21,47,.97);border-top:1px solid rgba(212,175,55,.3);backdrop-filter:blur(12px);scrollbar-width:thin}
+nav button{flex:0 0 88px;min-height:52px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;padding:5px 3px}nav button span{display:block;font-size:19px;margin-bottom:3px}nav button.active{color:var(--gold);border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.08)}
+footer{text-align:center;color:#7086a3;font-size:10px;letter-spacing:.08em;padding:20px}
+@media(min-width:720px){main{padding-top:26px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding:34px}.card{padding:18px}}
+</style>
+</head>
+<body>
+<header><div class="brand" aria-label="ZM">ZM</div><div><h1>ZLATKO AI MODE</h1><p>SPORTS HUB · PLUTON CODE ♠</p></div></header>
+<main>
+<section id="page-home" class="page active">
+ <div class="hero"><div class="kicker">DARK NAVY · 24K GOLD</div><h2>ZM <span>SPORTS</span><br>CONTROL HUB</h2><p>Една главна табла за спортскиот проект, работничките задачи, Формула 1, Реал Мадрид и копилотот ZLATKO AI MODE.</p><a class="action primary" href="https://github.com/zlatkomarina0-ai/ZM-AL-MODE" target="_blank" rel="noopener noreferrer">Отвори GitHub проект</a></div>
+ <div class="grid">
+  <article class="card"><span class="tag">PLUTON CODE ♠</span><h3>Спортски билтен</h3><p>Постојниот модул за внесување и локална обработка на спортски мечеви.</p><a class="action" href="./index.html">Отвори спортски проект</a></article>
+  <article class="card"><span class="tag">WORKSPACE</span><h3>Работници</h3><p>Подготовка на упатства и локални задачи за идната работничка инфраструктура.</p><button class="action" onclick="showPage('workers')">Отвори работнички простор</button></article>
+  <article class="card"><span class="tag">FORMULA 1</span><h3>F1 вести</h3><p>Вести од официјалниот Formula 1 портал.</p><button class="action" onclick="showPage('f1news')">Отвори F1 вести</button></article>
+  <article class="card"><span class="tag">RACE CALENDAR</span><h3>F1 календар</h3><p>Официјален календар за трките во сезоната.</p><button class="action" onclick="showPage('f1calendar')">Отвори календар</button></article>
+  <article class="card"><span class="tag">REAL MADRID</span><h3>Вести за Реал</h3><p>Официјални вести од клубот Реал Мадрид.</p><button class="action" onclick="showPage('rmnews')">Отвори вести</button></article>
+  <article class="card"><span class="tag">FIXTURES</span><h3>Календар на Реал</h3><p>Потврдени натпревари и официјален календар на клубот.</p><button class="action" onclick="showPage('rmcalendar')">Отвори календар</button></article>
+  <article class="card"><span class="tag">COPILOT</span><h3>ZLATKO AI MODE</h3><p>Главна контролна точка за проектот. Вистински AI повици и позадинска работа не се активни само поради овој интерфејс.</p><a class="action" href="./index.html">Отвори копилот / апликација</a></article>
+ </div>
+ <div class="notice">Важно: страницата е интерфејс. Работниците, автоматската синхронизација, позадинскиот AI и календарските известувања не се активираат само со визуелниот дизајн.</div>
+</section>
+<section id="page-workers" class="page"><h2 class="page-title">Работнички простор · PLUTON</h2>
+ <div class="card"><span class="tag">LOCAL TASK PAD</span><h3>Подготви задача</h3><p>Белешките се зачувуваат само во локалниот прелистувач на овој уред. Нема серверска испорака до надворешни работници.</p><textarea id="taskInput" placeholder="Опиши задача, приоритет и очекуван резултат..."></textarea><button class="action primary" onclick="addTask()">Зачувај локална задача</button><div id="taskList"></div></div>
+ <div class="card"><h3>Ресурси</h3><p>GitHub проект, статус и документација за реалните можности на системот.</p><a class="action" href="https://github.com/zlatkomarina0-ai/ZM-AL-MODE" target="_blank" rel="noopener noreferrer">GitHub</a><a class="action" href="https://github.com/zlatkomarina0-ai/ZM-AL-MODE/blob/main/PLUTON-STATUS.md" target="_blank" rel="noopener noreferrer">PLUTON статус</a></div>
+ <div class="notice">Не внесувај лозинки, API клучеви или лични/доверливи податоци во локалните белешки.</div>
+</section>
+<section id="page-f1news" class="page"><h2 class="page-title">Формула 1 · Вести</h2><div class="card"><span class="tag">OFFICIAL SOURCE</span><h3>Formula 1 News</h3><p>Официјален извор за вести, интервјуа, тимови и возачи. Отворањето бара интернет конекција.</p><a class="action primary" href="https://www.formula1.com/en/latest/all.html" target="_blank" rel="noopener noreferrer">Отвори F1 вести</a></div><div class="notice">Оваа страница користи официјален надворешен извор; не тврди дека има сопствен news сервер или архивирани вести.</div></section>
+<section id="page-f1calendar" class="page"><h2 class="page-title">Формула 1 · Календар</h2><div class="calendar"><span class="tag">2026 RACE CALENDAR</span><h3 style="color:var(--gold)">Календар на трки</h3><p>За точни датуми, почетни часови и промени, отвори го официјалниот календар на сезоната.</p><a class="action primary" href="https://www.formula1.com/en/racing/2026.html" target="_blank" rel="noopener noreferrer">Отвори F1 календар 2026</a></div><p class="notice" style="margin-top:12px">Автоматска синхронизација и известувања не се активни.</p></section>
+<section id="page-rmnews" class="page"><h2 class="page-title">Реал Мадрид · Вести</h2><div class="card"><span class="tag">OFFICIAL SOURCE</span><h3>Real Madrid News</h3><p>Официјални клубски соопштенија, вести за тимот и натпреварувањата.</p><a class="action primary" href="https://www.realmadrid.com/en-US/news" target="_blank" rel="noopener noreferrer">Отвори вести за Реал</a></div><div class="notice">Надворешниот сајт е изворот на тековните вести; ZM не тврди дека ги презема или чува.</div></section>
+<section id="page-rmcalendar" class="page"><h2 class="page-title">Реал Мадрид · Календар</h2><div class="calendar"><span class="tag">FIRST TEAM FIXTURES</span><h3 style="color:var(--gold)">Календар на натпревари</h3><p>Користи го официјалниот календар на клубот за потврдени мечеви, датуми и часови.</p><a class="action primary" href="https://www.realmadrid.com/en-US/football/first-team/fixtures" target="_blank" rel="noopener noreferrer">Отвори календар на Реал</a></div><p class="notice" style="margin-top:12px">Автоматски потсетници и синхронизација не се активни.</p></section>
+<section id="page-copilot" class="page"><h2 class="page-title">ZLATKO AI MODE · Копилот</h2><div class="card"><span class="tag">CENTRAL CONTROL</span><h3>Главен копилот</h3><p>Оваа страница е влезна точка кон постојната апликација. Реален AI одговор, позадински процеси и поврзување со надворешни работници бараат посебна серверска конфигурација.</p><a class="action primary" href="./index.html">Отвори главна апликација</a><a class="action" href="https://github.com/zlatkomarina0-ai/ZM-AL-MODE/blob/main/PLUTON-STATUS.md" target="_blank" rel="noopener noreferrer">Провери статус</a></div></section>
+<footer>ZM · ZLATKO AI MODE · PLUTON CODE ♠</footer>
+</main>
+<nav aria-label="ZM главна навигација">
+<button class="active" data-page="home" onclick="showPage('home')"><span>⌂</span>Почетна</button>
+<button data-page="workers" onclick="showPage('workers')"><span>▤</span>Работници</button>
+<button data-page="f1news" onclick="showPage('f1news')"><span>🏎</span>F1 вести</button>
+<button data-page="f1calendar" onclick="showPage('f1calendar')"><span>▦</span>F1 календар</button>
+<button data-page="rmnews" onclick="showPage('rmnews')"><span>⚽</span>Реал вести</button>
+<button data-page="rmcalendar" onclick="showPage('rmcalendar')"><span>▣</span>Реал календар</button>
+<button data-page="copilot" onclick="showPage('copilot')"><span>◈</span>Копилот</button>
+</nav>
+<script>
+function showPage(name,updateUrl){var page=document.getElementById('page-'+name);if(!page)return;document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p===page)});document.querySelectorAll('nav button').forEach(function(b){var active=b.dataset.page===name;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});if(updateUrl!==false&&window.location.hash!=='#'+name)window.location.hash=name;window.scrollTo({top:0,behavior:'smooth'});if(name==='workers')renderTasks()}
+window.addEventListener('hashchange',function(){var name=window.location.hash.slice(1);if(document.getElementById('page-'+name))showPage(name,false)});
+function readTasks(){try{var x=JSON.parse(localStorage.getItem('zm-hub-tasks-v1')||'[]');return Array.isArray(x)?x.filter(function(t){return t&&typeof t.text==='string'}):[]}catch(e){return []}}
+function renderTasks(){var list=document.getElementById('taskList');if(!list)return;list.replaceChildren();var tasks=readTasks();if(!tasks.length){var empty=document.createElement('p');empty.className='notice';empty.textContent='Нема локални задачи.';list.appendChild(empty);return}tasks.forEach(function(t,i){var item=document.createElement('div');item.className='task';var label=document.createElement('small');label.textContent='ЛОКАЛНА ЗАДАЧА '+(i+1);var text=document.createElement('div');text.textContent=t.text;var remove=document.createElement('button');remove.className='action';remove.textContent='Избриши';remove.addEventListener('click',function(){var current=readTasks();current.splice(i,1);try{localStorage.setItem('zm-hub-tasks-v1',JSON.stringify(current));renderTasks()}catch(e){alert('Не може да се ажурира локалната листа во прелистувачот.')}});item.append(label,text,remove);list.appendChild(item)})}
+function addTask(){var input=document.getElementById('taskInput');var value=input.value.trim();if(!value){input.focus();return}var tasks=readTasks();tasks.push({text:value,createdAt:new Date().toISOString()});try{localStorage.setItem('zm-hub-tasks-v1',JSON.stringify(tasks.slice(-100)));input.value='';renderTasks()}catch(e){alert('Не може да се зачува локално во прелистувачот.')}}
+var initialPage=window.location.hash.slice(1);showPage(document.getElementById('page-'+initialPage)?initialPage:'home',false);
+</script>
+</body>
+</html>
