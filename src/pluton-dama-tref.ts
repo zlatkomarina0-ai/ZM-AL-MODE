@@ -37,10 +37,12 @@ function isValidDnsHostname(hostname: string): boolean {
 function normalizeHosts(hosts: readonly string[]): Set<string> {
   const out = new Set<string>();
   for (const raw of hosts) {
+    if (typeof raw !== 'string') throw new Error('Source allowlist entries must be DNS hostnames.');
     const host = raw.trim().toLowerCase().replace(/\.$/, '');
     if (!host) continue;
-    if (host.includes('/') || host.includes('@') || host.includes(':') || host.includes('*') || host.includes(' ') || isPrivateHost(host))
-      throw new Error('Use public hostnames only; no scheme, path, port, wildcard, credentials, or private hosts.');
+    if (host.includes('/') || host.includes('@') || host.includes(':') || host.includes('*') || host.includes(' ') ||
+        isPrivateHost(host) || !isValidDnsHostname(host))
+      throw new Error('Use valid public DNS hostnames only; no scheme, path, port, wildcard, credentials, IP literals, malformed labels, or private hosts.');
     out.add(host);
   }
   return out;
