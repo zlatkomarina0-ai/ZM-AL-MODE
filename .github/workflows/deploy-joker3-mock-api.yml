@@ -1,0 +1,20 @@
+name: Deploy JOKER 3 Mock API
+on:
+  # Manual-only: requires a valid Cloudflare Workers token in repository secrets.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy JOKER 3 mock API Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
