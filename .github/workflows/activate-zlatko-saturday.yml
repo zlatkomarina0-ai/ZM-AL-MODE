@@ -83,6 +83,16 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      - name: Detect optional fallback secrets without exposing values
+        id: optional-secrets
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        shell: bash
+        run: |
+          [[ -n "$OPENROUTER_API_KEY" ]] && echo "has_openrouter=true" >> "$GITHUB_OUTPUT" || echo "has_openrouter=false" >> "$GITHUB_OUTPUT"
+          [[ -n "$GROQ_API_KEY" ]] && echo "has_groq=true" >> "$GITHUB_OUTPUT" || echo "has_groq=false" >> "$GITHUB_OUTPUT"
+
       - name: Deploy Worker and upload Gemini key as a Worker secret
         uses: cloudflare/wrangler-action@v3
         with:
@@ -93,4 +103,28 @@ jobs:
             GEMINI_API_KEY
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Upload OpenRouter key only when configured
+        if: steps.optional-secrets.outputs.has_openrouter == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
+          secrets: |
+            OPENROUTER_API_KEY
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+      - name: Upload Groq key only when configured
+        if: steps.optional-secrets.outputs.has_groq == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
+          secrets: |
+            GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 

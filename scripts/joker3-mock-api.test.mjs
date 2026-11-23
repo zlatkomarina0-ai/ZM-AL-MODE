@@ -8,7 +8,7 @@ test('health reports planned capacity and Gemini secret state without revealing 
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(body.system, 'JOKER 3');
-  assert.equal(body.mode, 'mock-plus-optional-gemini-proxy');
+  assert.equal(body.mode, 'mock-plus-free-provider-fallback');
   assert.equal(body.capacity.plannedBR, 1000);
   assert.equal(body.capacity.activeWorkers, 0);
   assert.equal(body.geminiConfigured, false);
@@ -45,13 +45,13 @@ test('Gemini route fails closed when secret or rate limiter is missing', async (
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
   }), {});
   assert.equal(response.status, 503);
-  assert.equal((await response.json()).error.type, 'gemini_not_configured');
+  assert.equal((await response.json()).error.type, 'ai_rate_limit_not_configured');
   const noLimiter = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
   }), { GEMINI_API_KEY: 'test-secret-gemini-key' });
   assert.equal(noLimiter.status, 503);
-  assert.equal((await noLimiter.json()).error.type, 'gemini_rate_limit_not_configured');
+  assert.equal((await noLimiter.json()).error.type, 'ai_rate_limit_not_configured');
 });
 
 test('Gemini proxy uses fixed Google endpoint and returns compatible response', async () => {
@@ -91,7 +91,7 @@ test('Gemini quota errors are sanitized and do not trigger paid fallback', async
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
     }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     const text = await response.text();
-    assert.equal(response.status, 429);
+    assert.equal(response.status, 503);
     assert.match(text, /No paid fallback/);
     assert.doesNotMatch(text, /private upstream diagnostic/);
   } finally { globalThis.fetch = originalFetch; }
@@ -113,7 +113,7 @@ test('request validation, CORS, methods and fixed upstream boundary are enforced
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
   }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: false }) } });
   assert.equal(limited.status, 429);
-  assert.equal((await limited.json()).error.type, 'gemini_edge_rate_limited');
+  assert.equal((await limited.json()).error.type, 'ai_edge_rate_limited');
   const brokenLimiter = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
@@ -146,5 +146,64 @@ test('Gemini proxy joins consecutive same-role messages with real line breaks', 
     assert.equal(response.status, 200);
     assert.equal(captured.contents.length, 1);
     assert.equal(captured.contents[0].parts[0].text, 'first\n\nsecond');
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('JOKER 4 fallback tries Gemini then OpenRouter free router and stops on success', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push(String(url));
+    if (String(url).includes('generativelanguage.googleapis.com')) return new Response('quota', { status: 429 });
+    if (String(url).includes('openrouter.ai')) {
+      assert.equal(JSON.parse(init.body).model, 'openrouter/free');
+      assert.equal(init.headers.Authorization, 'Bearer test-openrouter-key');
+      return new Response(JSON.stringify({
+        model: 'openrouter/free',
+        choices: [{ message: { content: 'Free fallback answer' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    throw new Error('Unexpected provider call: ' + url);
+  };
+  try {
+    const response = await worker.fetch(new Request('https://mock.example/v1/copilot/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
+    }), {
+      GEMINI_API_KEY: 'test-secret-gemini-key', OPENROUTER_API_KEY: 'test-openrouter-key',
+      GROQ_API_KEY: 'test-groq-key', GROQ_MODEL: 'test-model', GROQ_FREE_TIER_CONFIRMED: 'true',
+      GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) },
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.provider, 'openrouter-free');
+    assert.equal(body.choices[0].message.content, 'Free fallback answer');
+    assert.deepEqual(calls, [
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+      'https://openrouter.ai/api/v1/chat/completions',
+    ]);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('Groq fallback is skipped unless free tier is explicitly confirmed and model configured', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    return new Response('provider unavailable', { status: 503 });
+  };
+  try {
+    const response = await worker.fetch(new Request('https://mock.example/v1/copilot/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
+    }), {
+      GEMINI_API_KEY: 'test-secret-gemini-key', GROQ_API_KEY: 'test-groq-key', GROQ_MODEL: 'some-model',
+      GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) },
+    });
+    assert.equal(response.status, 503);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].includes('generativelanguage.googleapis.com'), true);
+    assert.match(await response.text(), /No paid fallback was used/);
   } finally { globalThis.fetch = originalFetch; }
 });
