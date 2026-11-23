@@ -51,7 +51,7 @@ test('Gemini route fails closed when secret or rate limiter is missing', async (
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
   }), { GEMINI_API_KEY: 'test-secret-gemini-key' });
   assert.equal(noLimiter.status, 503);
-  assert.equal((await noLimiter.json()).error.type, 'gemini_rate_limit_not_configured');
+  assert.equal((await noLimiter.json()).error.type, 'ai_rate_limit_not_configured');
 });
 
 test('Gemini proxy uses fixed Google endpoint and returns compatible response', async () => {
@@ -113,7 +113,7 @@ test('request validation, CORS, methods and fixed upstream boundary are enforced
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
   }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: false }) } });
   assert.equal(limited.status, 429);
-  assert.equal((await limited.json()).error.type, 'gemini_edge_rate_limited');
+  assert.equal((await limited.json()).error.type, 'ai_edge_rate_limited');
   const brokenLimiter = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
