@@ -22,3 +22,7 @@ Run `npm run test:pluton` and `npm run build`.
 
 ## Separate deployment
 The worker and `wrangler.toml` are separate from the existing health-only `zlatko-api` Worker. It is not deployed automatically. A deployment requires a valid Cloudflare Workers token configured in repository secrets; never commit or paste the token into source code or chat. Until a deployment is verified, no public JOKER 3 endpoint exists.
+
+
+## Deployment workflow
+A manual-only workflow is available at `.github/workflows/deploy-joker3-mock-api.yml`. It deploys this isolated Worker as `joker3-pluton-mock-api` using the repository secret `CLOUDFLARE_API_TOKEN`. Do not run it until that secret is replaced with a valid token and you intend to publish this test-only endpoint. Never share the token in chat or commit it to source.
