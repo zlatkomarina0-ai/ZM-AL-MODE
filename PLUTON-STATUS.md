@@ -88,3 +88,13 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - Not deployed. A public endpoint will not exist until Cloudflare deployment is separately configured and verified; no token values belong in chat or source.
 
 - A separate manual-only deployment workflow is defined at `.github/workflows/deploy-joker3-mock-api.yml`; it has not been run. The existing Cloudflare token was previously invalid, so deployment remains blocked until the repository secret is repaired by the owner.
+
+
+## JOKER 3 — parallel Gemini API route (implemented in source; deployment still manual)
+- Kept POST /v1/chat/completions as an independent deterministic mock; it never calls a provider.
+- Added POST /v1/gemini/chat/completions, a server-side proxy to Google's fixed gemini-flash-latest generateContent endpoint. The key is read only from Cloudflare Worker secret GEMINI_API_KEY.
+- Added bounded request validation (64 KiB body, up to 20 messages, 4,000 characters/message, 20,000 total characters, 1,024 output tokens), timeout, sanitized provider errors, quota handling, and no paid fallback or automatic retries.
+- Zero cost is not guaranteed by code if the Google project has paid billing enabled. Owner must verify free-tier eligibility and quota/billing settings.
+- CORS is not authentication and this Worker has no robust per-user rate limit. Configure Cloudflare edge rate limiting and an access/authentication layer before public use.
+- Tests cover mock isolation, missing secret, mocked Gemini success, quota errors, validation and fixed upstream endpoint. No live Gemini API call was made during development.
+- Not deployed. Owner must fix CLOUDFLARE_API_TOKEN, deploy manually, then configure GEMINI_API_KEY as a Worker secret. The 1,000 BR target is conceptual; activeWorkers is 0.

@@ -1,3 +1,6 @@
 name = "joker3-pluton-mock-api"
 main = "worker.js"
 compatibility_date = "2026-11-23"
+
+# After deployment, configure GEMINI_API_KEY using: npx wrangler secret put GEMINI_API_KEY
+# Never place provider keys in this file or source control.

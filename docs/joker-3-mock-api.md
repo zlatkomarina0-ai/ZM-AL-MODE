@@ -1,28 +1,33 @@
-# JOKER 3 — External PLUTON Mock API
+# JOKER 3 — External PLUTON API: Mock + Gemini
 
-## Purpose
-JOKER 3 is an isolated, API-compatible mock interface for testing integrations with the planned external PLUTON system. It uses familiar JSON shapes at `GET /v1/models` and `POST /v1/chat/completions`.
+## Separate routes
+- GET /health — configuration state and planned capacity; no secrets returned.
+- GET /v1/models — mock model and Gemini route.
+- POST /v1/chat/completions — deterministic mock; never calls an AI provider.
+- POST /v1/gemini/chat/completions — server-side proxy to Google's Gemini API using the fixed model alias gemini-flash-latest.
 
-## Explicit limits
-- This is a deterministic mock, not a copy of a private or proprietary API implementation.
-- Responses are marked as simulated and echo a short preview of the last user message. No real AI model is called.
-- 1,000 BR is a planned logical capacity label. `activeWorkers: 0` is returned intentionally; no workers, machines, or compute capacity are provisioned.
-- No provider API calls, outbound network calls, proxying, website fetching, persistence, or real task execution.
-- Request bodies are limited to 64 KiB; up to 100 messages and 4,000 characters per message.
-- CORS permits only the GitHub Pages app origin and local Vite development origin. CORS is not authentication. The mock must not receive secrets, credentials, private data, or production workloads.
-- No authentication is implemented. Treat it as a test-only interface and do not expose sensitive data.
+The Gemini route converts OpenAI-style messages to Gemini generateContent input and maps the result back to a chat.completion-shaped response. This is a compatibility wrapper, not a private API clone.
 
-## Routes
-- `GET /health` — simulation status and planned capacity.
-- `GET /v1/models` — one clearly labelled mock model.
-- `POST /v1/chat/completions` — API-compatible response envelope with a deterministic simulation notice.
+## Configure the key safely
+After deploying the Worker, run:
+```sh
+cd joker3-api
+npx wrangler secret put GEMINI_API_KEY
+```
+Enter the key only in Wrangler's secure prompt or the Cloudflare dashboard secret editor. Never put it in index.html, app JavaScript, GitHub source, wrangler.toml, or chat. The browser calls the Worker, not Google directly.
 
-## Local validation
-Run `npm run test:pluton` and `npm run build`.
+## Free-only controls
+- Maximum 64 KiB request body, 20 Gemini messages, 4,000 characters/message, 20,000 total characters, 1,024 output tokens, and 20-second timeout.
+- Quota errors are returned clearly; there is no paid fallback or automatic retry.
+- Code cannot guarantee a $0 account if the Google project has billing enabled. Confirm free-tier eligibility, quotas and billing controls in Google AI Studio before use. Availability depends on model, project and current Google terms.
+- Gemini requests leave Cloudflare and are processed by Google under the account's applicable terms.
 
-## Separate deployment
-The worker and `wrangler.toml` are separate from the existing health-only `zlatko-api` Worker. It is not deployed automatically. A deployment requires a valid Cloudflare Workers token configured in repository secrets; never commit or paste the token into source code or chat. Until a deployment is verified, no public JOKER 3 endpoint exists.
-
-
-## Deployment workflow
-A manual-only workflow is available at `.github/workflows/deploy-joker3-mock-api.yml`. It deploys this isolated Worker as `joker3-pluton-mock-api` using the repository secret `CLOUDFLARE_API_TOKEN`. Do not run it until that secret is replaced with a valid token and you intend to publish this test-only endpoint. Never share the token in chat or commit it to source.
+## Security limits
+- The API key remains a server-side Worker secret and is never returned to callers.
+- CORS/origin allowlisting is not authentication. This Worker does not implement robust per-user rate limiting or authentication.
+- Before public use, configure Cloudflare edge rate limiting and an appropriate access/authentication layer; otherwise an external caller could consume the Google quota.
+- The upstream URL/model are fixed; user input cannot select a proxy target. Provider error bodies are not reflected to callers.
+- 1,000 BR is a planned logical label; activeWorkers remains 0. No real worker infrastructure is provisioned.
+- Deployment is manual and has not been performed. Gemini stays disabled until GEMINI_API_KEY is configured as a Worker secret.
+## Tests
+Run npm run test:pluton and npm run build.
