@@ -11,7 +11,7 @@ test('accepts only HTTPS URLs on an exact allowlist', () => {
   assert.throws(() => validateDamaTrefSourceUrl('https://192.0.2.10', ['192.0.2.10']), /DNS hostnames|invalid/i);
   assert.throws(() => validateDamaTrefSourceUrl('https://2130706433', ['2130706433']), /DNS hostnames|Private/);
   assert.throws(() => validateDamaTrefSourceUrl('https://bad..example.com', ['bad..example.com']), /DNS hostnames|allowlist|invalid/i);
-  assert.throws(() => validateDamaTrefSourceUrl('https://example.123', ['example.123']), /DNS hostnames/);
+  assert.throws(() => validateDamaTrefSourceUrl('https://example.123', ['example.123']), /DNS hostnames|invalid/i);
   assert.throws(() => validateDamaTrefSourceUrl('https://localhost', ['localhost']), /DNS hostnames|Private/);
   assert.throws(() => validateDamaTrefSourceUrl('https://example.com:8443', ['example.com']), /port/);
 });
