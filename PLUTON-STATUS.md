@@ -75,3 +75,14 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - Worker remains GET/OPTIONS-only; no website-fetch, proxy, upload, or AI API route is introduced.
 - Added regression tests for headers, origin, methods, unknown routes, and accidental outbound-network calls in Worker source.
 - This does not establish network-level egress controls or server-side employee authentication; deployment and infrastructure must be independently verified.
+
+
+## JOKER 3 — External PLUTON mock API
+- Added a separate test-only Worker under `joker3-api/`; it does not alter the existing health-only `zlatko-api` Worker.
+- API-compatible routes: `GET /health`, `GET /v1/models`, and `POST /v1/chat/completions`.
+- The mock response is explicitly labelled as simulated; it does not call a real AI model, external provider, or outbound network.
+- Capacity label: 1,000 planned logical BR; `activeWorkers: 0`. No real workers or machines are provisioned.
+- Request validation: JSON only, 64 KiB request limit, at most 100 messages and 4,000 characters per message; unapproved browser origins and unsupported routes/methods are rejected.
+- No authentication, persistent storage, or real task execution. Do not send secrets or sensitive data; this is test-only and CORS is not authentication.
+- Tests added to `npm run test:pluton`. Design: `docs/joker-3-mock-api.md`.
+- Not deployed. A public endpoint will not exist until Cloudflare deployment is separately configured and verified; no token values belong in chat or source.
