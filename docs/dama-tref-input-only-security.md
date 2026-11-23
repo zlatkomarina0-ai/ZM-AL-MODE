@@ -4,14 +4,14 @@
 DAMA TREF is the security-policy layer for PLUTON CODE. Approved source material may be admitted for processing; internal data exports and arbitrary outbound communications are denied by default.
 
 ## Implemented
-- Exact-host HTTPS URL validation; rejects HTTP, URL credentials, non-default ports, unlisted hosts, common private/local IP ranges and metadata hostnames.
+- Exact-host HTTPS URL validation; rejects HTTP, URL credentials, non-default ports, unlisted hosts, IP-literal source URLs/allowlist entries, malformed DNS labels, common private/local IP ranges and metadata hostnames.
 - Default-deny outbound decision function. The only approved intent is a body-less GET to an allowlisted source; the module does not perform network requests.
 - Least-privilege role checks for administrator, chief, worker and auditor.
 - Input size/type checks and heuristic quarantine for active HTML/script patterns.
 - Bounded audit-event helper and unit tests.
 
 ## Critical limitations
-This is a policy library, not a deployed firewall, sandbox, antivirus engine, or server-side identity system. Browser code can be modified and localStorage edited. URL checks do not prevent DNS rebinding and cannot independently verify DNS resolution. Heuristic scanning is not malware signature scanning.
+This is a policy library, not a deployed firewall, sandbox, antivirus engine, or server-side identity system. Browser code can be modified and localStorage edited. URL checks do not prevent DNS rebinding and cannot independently verify DNS resolution. Source allowlists accept DNS hostnames only, not IP literals; a trusted acquisition service must still resolve DNS and enforce public-IP restrictions at connection time. Heuristic scanning is not malware signature scanning.
 
 No website fetching is implemented here. No requests are sent to sources and no internal data is transmitted. A production acquisition service must enforce policy server-side, resolve and validate public IPs after DNS and on every redirect, block private/link-local/metadata ranges, restrict redirects and response sizes, scan files in quarantine, and deny arbitrary outbound sockets.
 
