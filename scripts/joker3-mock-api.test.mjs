@@ -19,7 +19,7 @@ test('health reports planned capacity and Gemini secret state without revealing 
 test('models list keeps the mock and Gemini routes separate', async () => {
   const body = await (await worker.fetch(new Request('https://mock.example/v1/models'), {})).json();
   assert.equal(body.data[0].id, 'pluton-mock-chat');
-  assert.equal(body.data[1].id, 'gemini-flash-latest');
+  assert.equal(body.data[1].id, 'gemini-3.8-flash');
   assert.equal(body.data[1].route, '/v1/gemini/chat/completions');
 });
 
@@ -62,16 +62,17 @@ test('Gemini proxy uses fixed Google endpoint and returns compatible response', 
     const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'system', content: 'Be concise' }, { role: 'user', content: 'hello' }] }),
-    }), { GEMINI_API_KEY: 'test-secret-gemini-key' });
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.choices[0].message.content, 'Gemini test response');
     assert.equal(body.provider, 'google-gemini-api');
     assert.equal(body.simulated, false);
     assert.equal(body.usage.total_tokens, 7);
-    assert.match(captured.url, /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-flash-latest:generateContent$/);
+    assert.match(captured.url, /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-3.8-flash:generateContent$/);
     assert.equal(captured.init.headers['x-goog-api-key'], 'test-secret-gemini-key');
     assert.equal(captured.init.body.includes('test-secret-gemini-key'), false);
+    assert.equal(JSON.parse(captured.init.body).contents.length, 1);
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -82,7 +83,7 @@ test('Gemini quota errors are sanitized and do not trigger paid fallback', async
     const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
-    }), { GEMINI_API_KEY: 'test-secret-gemini-key' });
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     const text = await response.text();
     assert.equal(response.status, 429);
     assert.match(text, /No paid fallback/);
@@ -96,10 +97,17 @@ test('request validation, CORS, methods and fixed upstream boundary are enforced
   assert.equal((await send('/v1/gemini/chat/completions', JSON.stringify({ messages: [] }))).status, 400);
   assert.equal((await send('/v1/gemini/chat/completions', JSON.stringify({ messages: [{ role: 'system-admin', content: 'x' }] }))).status, 400);
   assert.equal((await send('/v1/gemini/chat/completions', JSON.stringify({ messages: [{ role: 'user', content: 'x'.repeat(4001) }] }))).status, 400);
+  assert.equal((await send('/v1/gemini/chat/completions', JSON.stringify({ messages: [{ role: 'assistant', content: 'hello' }, { role: 'user', content: 'hi' }] }))).status, 400);
   assert.equal((await send('/v1/gemini/chat/completions', 'x', { 'Content-Type': 'text/plain' })).status, 415);
   assert.equal((await worker.fetch(new Request('https://mock.example/health', { headers: { Origin: 'https://evil.example' } }), {})).status, 403);
   assert.equal((await worker.fetch(new Request('https://mock.example/private'), {})).status, 404);
   assert.equal((await worker.fetch(new Request('https://mock.example/v1/models', { method: 'DELETE' }), {})).status, 405);
+  const limited = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
+  }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: false }) } });
+  assert.equal(limited.status, 429);
+  assert.equal((await limited.json()).error.type, 'gemini_edge_rate_limited');
   const source = await readFile(new URL('../joker3-api/worker.js', import.meta.url), 'utf8');
   assert.equal((source.match(/\bfetch\(GEMINI_ENDPOINT/g) || []).length, 1);
   assert.match(source, /const GEMINI_ENDPOINT = 'https:\/\/generativelanguage\.googleapis\.com/);
