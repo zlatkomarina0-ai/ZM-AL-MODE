@@ -80,82 +80,120 @@ async function mockChatCompletion(request, origin) {
   }, 200, origin);
 }
 async function geminiChatCompletion(request, origin, env) {
-  if (!env || typeof env.GEMINI_API_KEY !== 'string' || env.GEMINI_API_KEY.trim().length < 10) {
-    return errorResponse('Gemini is not configured. Set the GEMINI_API_KEY Worker secret; no provider request was sent.', 503, origin, 'gemini_not_configured');
-  }
   const parsed = await readMessages(request, origin, 20);
   if (parsed.response) return parsed.response;
+  if (!env || !env.GEMINI_RATE_LIMITER || typeof env.GEMINI_RATE_LIMITER.limit !== 'function') {
+    return errorResponse('AI fallback is disabled until the Cloudflare rate-limit binding is configured.', 503, origin, 'ai_rate_limit_not_configured');
+  }
+  const clientKey = request.headers.get('cf-connecting-ip') || 'unknown-client';
+  let allowance;
+  try {
+    allowance = await env.GEMINI_RATE_LIMITER.limit({ key: 'ai-fallback:' + clientKey });
+  } catch {
+    return errorResponse('AI rate-limit check failed. Request blocked; no provider request was sent.', 503, origin, 'ai_rate_limit_unavailable');
+  }
+  if (!allowance || allowance.success !== true) {
+    return errorResponse('AI request limit reached. Wait before trying again; no provider request was sent.', 429, origin, 'ai_edge_rate_limited');
+  }
   const messages = parsed.body.messages;
   const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n').slice(0, MAX_MESSAGE_CHARS);
-  const rawContents = messages.filter(m => m.role !== 'system').map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
-  if (!rawContents.some(m => m.role === 'user')) {
-    return errorResponse('At least one user message is required for Gemini.', 400, origin);
+  const chatMessages = messages.filter(m => m.role !== 'system');
+  if (!chatMessages.some(m => m.role === 'user') || chatMessages[chatMessages.length - 1]?.role !== 'user') {
+    return errorResponse('At least one user message is required and the latest message must be from the user.', 400, origin);
   }
-  if (rawContents[0].role !== 'user' || rawContents[rawContents.length - 1].role !== 'user') {
-    return errorResponse('Gemini chat history must start and end with a user message (system instructions are separate).', 400, origin);
-  }
-  // Gemini chat history alternates user/model turns. Merge adjacent same-role
-  // entries rather than sending an invalid sequence to the provider.
-  const contents = [];
-  for (const item of rawContents) {
-    const previous = contents[contents.length - 1];
-    if (previous && previous.role === item.role) {
-      previous.parts[0].text += '\n\n' + item.parts[0].text;
-    } else {
-      contents.push({ role: item.role, parts: [{ text: item.parts[0].text }] });
-    }
-  }
-  const payload = { contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } };
-  if (systemText) payload.systemInstruction = { parts: [{ text: systemText }] };
-  let upstream;
-  try {
-    if (!env.GEMINI_RATE_LIMITER || typeof env.GEMINI_RATE_LIMITER.limit !== 'function') {
-      return errorResponse('Gemini route is disabled until the Cloudflare rate-limit binding is configured.', 503, origin, 'gemini_rate_limit_not_configured');
-    }
-    const clientKey = request.headers.get('cf-connecting-ip') || 'unknown-client';
-    let allowance;
+  const failures = [];
+  const timeout = () => AbortSignal.timeout(20000);
+  const normalizeOpenAI = async (provider, upstream, model) => {
+    if (!upstream.ok) throw new Error(provider + '_http_' + upstream.status);
+    const result = await upstream.json();
+    const answer = result?.choices?.[0]?.message?.content;
+    if (typeof answer !== 'string' || !answer.trim()) throw new Error(provider + '_empty_response');
+    const usage = result.usage || {};
+    return json({
+      id: 'joker4-' + provider + '-' + Date.now(), object: 'chat.completion', created: Math.floor(Date.now() / 1000),
+      model: result.model || model,
+      choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: result.choices[0].finish_reason || 'stop' }],
+      usage: { prompt_tokens: Number(usage.prompt_tokens || 0), completion_tokens: Number(usage.completion_tokens || 0), total_tokens: Number(usage.total_tokens || 0) },
+      simulated: false, provider, providerCalls: true, outboundNetwork: true,
+      fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: failures.slice() },
+      costPolicy: 'OpenRouter uses openrouter/free. Groq is attempted only when GROQ_FREE_TIER_CONFIRMED=true and a model is configured; provider account quotas apply.',
+    }, 200, origin);
+  };
+  // 1. Gemini. Errors, timeouts, and quota responses fall through to the next
+  // configured provider. Never expose upstream bodies or API keys to clients.
+  if (typeof env.GEMINI_API_KEY === 'string' && env.GEMINI_API_KEY.trim().length >= 10) {
     try {
-      allowance = await env.GEMINI_RATE_LIMITER.limit({ key: 'gemini:' + clientKey });
-    } catch {
-      return errorResponse('Gemini rate-limit check failed. Request blocked; no provider request was sent.', 503, origin, 'gemini_rate_limit_unavailable');
-    }
-    if (!allowance || allowance.success !== true) {
-      return errorResponse('Gemini request limit reached. Wait before trying again; no provider request was sent.', 429, origin, 'gemini_edge_rate_limited');
-    }
-    upstream = await fetch(GEMINI_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(20000),
-    });
-  } catch {
-    return errorResponse('Gemini request failed or timed out. Check connectivity and try again.', 502, origin, 'gemini_upstream_error');
-  }
-  if (!upstream.ok) {
-    if (upstream.status === 429) return errorResponse('Gemini quota/rate limit reached. No paid fallback is configured.', 429, origin, 'gemini_quota_exceeded');
-    if (upstream.status === 401 || upstream.status === 403) return errorResponse('Gemini rejected the key or project access. Check the Worker secret and Google quota settings.', 502, origin, 'gemini_configuration_error');
-    if (upstream.status === 400) return errorResponse('Gemini rejected the request. Check message format or model availability.', 400, origin, 'gemini_bad_request');
-    return errorResponse('Gemini provider returned HTTP ' + upstream.status + '.', 502, origin, 'gemini_upstream_error');
-  }
-  let result;
-  try { result = await upstream.json(); } catch {
-    return errorResponse('Gemini returned an unreadable response.', 502, origin, 'gemini_upstream_error');
-  }
-  const parts = result && result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts;
-  const answer = Array.isArray(parts) ? parts.filter(p => typeof p.text === 'string').map(p => p.text).join('') : '';
-  if (!answer) return errorResponse('Gemini returned no text. The response may have been blocked or empty.', 502, origin, 'gemini_empty_response');
-  const usage = result.usageMetadata || {};
+      const rawContents = chatMessages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+      const contents = [];
+      for (const item of rawContents) {
+        const previous = contents[contents.length - 1];
+        if (previous && previous.role === item.role) previous.parts[0].text += '\n\n' + item.parts[0].text;
+        else contents.push({ role: item.role, parts: [{ text: item.parts[0].text }] });
+      }
+      const payload = { contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } };
+      if (systemText) payload.systemInstruction = { parts: [{ text: systemText }] };
+      const upstream = await fetch(GEMINI_ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body: JSON.stringify(payload), signal: timeout(),
+      });
+      if (!upstream.ok) throw new Error('gemini_http_' + upstream.status);
+      const result = await upstream.json();
+      const parts = result?.candidates?.[0]?.content?.parts;
+      const answer = Array.isArray(parts) ? parts.filter(p => typeof p.text === 'string').map(p => p.text).join('') : '';
+      if (!answer.trim()) throw new Error('gemini_empty_response');
+      const usage = result.usageMetadata || {};
+      return json({
+        id: 'joker4-gemini-' + Date.now(), object: 'chat.completion', created: Math.floor(Date.now() / 1000),
+        model: GEMINI_MODEL,
+        choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: result.candidates[0].finishReason || 'stop' }],
+        usage: { prompt_tokens: Number(usage.promptTokenCount || 0), completion_tokens: Number(usage.candidatesTokenCount || 0), total_tokens: Number(usage.totalTokenCount || 0) },
+        simulated: false, provider: 'google-gemini-api', providerCalls: true, outboundNetwork: true,
+        fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: [] },
+        costPolicy: 'Gemini usage depends on the Google project free-tier eligibility and quota.',
+      }, 200, origin);
+    } catch (error) { failures.push('google-gemini-api:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+  } else failures.push('google-gemini-api:not_configured');
+
+  // 2. OpenRouter free router. This model ID routes only to free models.
+  if (typeof env.OPENROUTER_API_KEY === 'string' && env.OPENROUTER_API_KEY.trim().length >= 10) {
+    try {
+      const payload = { model: 'openrouter/free', messages: chatMessages, max_tokens: 1024, temperature: 0.7 };
+      if (systemText) payload.messages = [{ role: 'system', content: systemText }, ...chatMessages];
+      const upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST', headers: {
+          'Content-Type': 'application/json', Authorization: 'Bearer ' + env.OPENROUTER_API_KEY,
+          'HTTP-Referer': 'https://zlatkomarina0-ai.github.io/ZM-AL-MODE/', 'X-Title': 'ZLATKO AI MODE',
+        },
+        body: JSON.stringify(payload), signal: timeout(),
+      });
+      return await normalizeOpenAI('openrouter-free', upstream, 'openrouter/free');
+    } catch (error) { failures.push('openrouter-free:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+  } else failures.push('openrouter-free:not_configured');
+
+  // 3. Groq is opt-in only when the owner confirms the chosen model/account is
+  // on a no-cost tier. Do not call a possibly billable Groq model by default.
+  if (env.GROQ_FREE_TIER_CONFIRMED === 'true' &&
+      typeof env.GROQ_API_KEY === 'string' && env.GROQ_API_KEY.trim().length >= 10 &&
+      typeof env.GROQ_MODEL === 'string' && env.GROQ_MODEL.trim().length > 0) {
+    try {
+      const payload = { model: env.GROQ_MODEL, messages: systemText ? [{ role: 'system', content: systemText }, ...chatMessages] : chatMessages, max_tokens: 1024, temperature: 0.7 };
+      const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env.GROQ_API_KEY },
+        body: JSON.stringify(payload), signal: timeout(),
+      });
+      return await normalizeOpenAI('groq-free-tier', upstream, env.GROQ_MODEL);
+    } catch (error) { failures.push('groq-free-tier:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+  } else failures.push('groq-free-tier:not_configured_or_not_confirmed_free');
+
   return json({
-    id: 'joker3-gemini-' + Date.now(), object: 'chat.completion', created: Math.floor(Date.now() / 1000),
-    model: GEMINI_MODEL,
-    choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: result.candidates[0].finishReason || 'stop' }],
-    usage: { prompt_tokens: Number(usage.promptTokenCount || 0), completion_tokens: Number(usage.candidatesTokenCount || 0), total_tokens: Number(usage.totalTokenCount || 0) },
-    simulated: false, provider: 'google-gemini-api', providerCalls: true, outboundNetwork: true,
-    costPolicy: 'No paid fallback in this Worker; Google account quota and billing must be configured separately.',
-  }, 200, origin);
+    error: {
+      type: 'all_free_ai_providers_failed',
+      message: 'No configured free AI provider could answer. Check provider keys, free-tier quotas, model access, and Cloudflare logs. No paid fallback was used.',
+      providers: failures.map(item => item.split(':')[0]),
+    },
+    simulated: false, providerCalls: failures.some(item => !item.endsWith('not_configured') && !item.endsWith('not_configured_or_not_confirmed_free')),
+    costPolicy: 'No paid fallback. OpenRouter uses its free-only router; Groq is skipped unless its free tier is explicitly confirmed.',
+  }, 503, origin);
 }
 export default {
   async fetch(request, env) {
@@ -169,8 +207,10 @@ export default {
     }
     if (url.pathname === '/health' && request.method === 'GET') return json({
       ok: true, system: 'JOKER 3', component: 'External PLUTON API',
-      mode: 'mock-plus-optional-gemini-proxy', mockRouteProviderCalls: false,
-      geminiRoute: '/v1/gemini/chat/completions', geminiConfigured: Boolean(env && env.GEMINI_API_KEY), geminiRateLimitConfigured: Boolean(env && env.GEMINI_RATE_LIMITER),
+      mode: 'mock-plus-free-provider-fallback', mockRouteProviderCalls: false,
+      geminiRoute: '/v1/gemini/chat/completions', copilotRoute: '/v1/copilot/chat/completions',
+      geminiConfigured: Boolean(env && env.GEMINI_API_KEY), openrouterConfigured: Boolean(env && env.OPENROUTER_API_KEY),
+      groqConfigured: Boolean(env && env.GROQ_API_KEY && env.GROQ_MODEL && env.GROQ_FREE_TIER_CONFIRMED === 'true'), geminiRateLimitConfigured: Boolean(env && env.GEMINI_RATE_LIMITER),
       capacity: { plannedBR: PLANNED_BR, activeWorkers: 0 },
       warning: '1,000 BR is a planned label, not deployed compute. CORS is not authentication; configure edge rate limits/auth before public use.',
     }, 200, origin);
@@ -179,12 +219,13 @@ export default {
       data: [
         { id: 'pluton-mock-chat', object: 'model', owned_by: 'joker-3-simulation' },
         { id: GEMINI_MODEL, object: 'model', owned_by: 'google', route: '/v1/gemini/chat/completions' },
+        { id: 'joker4-free-fallback', object: 'model', owned_by: 'zlatko-ai', route: '/v1/copilot/chat/completions', provider_order: ['google-gemini-api', 'openrouter/free', 'groq-free-tier'] },
       ],
-      note: 'Gemini requires the server-side GEMINI_API_KEY secret and available Google quota.',
+      note: 'Fallback order: Gemini, OpenRouter free router, then Groq only when free-tier use is explicitly confirmed. Provider keys remain server-side.',
       capacity: { plannedBR: PLANNED_BR, activeWorkers: 0 },
     }, 200, origin);
     if (url.pathname === '/v1/chat/completions' && request.method === 'POST') return mockChatCompletion(request, origin);
-    if (url.pathname === '/v1/gemini/chat/completions' && request.method === 'POST') return geminiChatCompletion(request, origin, env);
+    if ((url.pathname === '/v1/gemini/chat/completions' || url.pathname === '/v1/copilot/chat/completions') && request.method === 'POST') return geminiChatCompletion(request, origin, env);
     if (request.method !== 'GET' && request.method !== 'POST') return errorResponse('Method not allowed.', 405, origin);
     return errorResponse('Not found.', 404, origin);
   },
