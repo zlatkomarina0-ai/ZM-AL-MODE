@@ -105,3 +105,12 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - Added a required Cloudflare Worker Rate Limiting binding for the Gemini route: approximate 10 requests per client IP per 60 seconds. The route fails closed if the binding is absent and does not send the provider request when throttled.
 - Normalizes consecutive same-role messages and validates that Gemini conversation history begins and ends with a user message, reducing malformed provider requests.
 - This is not user authentication or a strict global quota. No live Gemini request was made. Deployment still requires valid Cloudflare credentials and the server-side GEMINI_API_KEY secret.
+
+
+## ZM Sports Hub — navy and 24-karat-gold design (UI implementation)
+- Added `sports.html` as a separate sports portal with dedicated pages for the worker workspace, Formula 1 news, Formula 1 calendar, Real Madrid news, Real Madrid fixtures, and the ZLATKO AI MODE copilot entry point.
+- Applied a dark navy background with a large, low-opacity ZM watermark and gold accents. Added `zm-icon.svg` and `manifest.webmanifest` for the ZM app identity.
+- Updated the existing `index.html` branding and added a ZM HUB link to the new portal.
+- The worker page can save local notes in that browser's localStorage. Those notes are not sent to workers or a server.
+- News and fixture pages link to official external sources. Live schedules, automatic calendar sync, alerts, background AI, and remote-worker distribution are not implemented by this UI change.
+- JOKER 4 and AS HERC remain separate future work items and were not changed or merged into this sports UI.
