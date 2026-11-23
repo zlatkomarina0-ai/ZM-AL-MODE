@@ -112,6 +112,7 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - Applied a dark navy background with a large, low-opacity ZM watermark and gold accents. Added `zm-icon.svg` and `manifest.webmanifest` for the ZM app identity.
 - Updated the existing `index.html` branding and added a ZM HUB link to the new portal.
 - The worker page can save local notes in that browser's localStorage. Those notes are not sent to workers or a server; storage failures are handled in the UI.
+- Worker tasks can be exported to JSON and manually imported from JSON (maximum 1 MB per import, text capped at 5,000 characters, 100 tasks retained). This is a manual file-transfer bridge only; it does not dispatch tasks to external workers.
 - Portal sections support URL-hash navigation so a section can be bookmarked and browser back/forward navigation works.
 - News and fixture pages link to official external sources. Live schedules, automatic calendar sync, alerts, background AI, and remote-worker distribution are not implemented by this UI change.
 - JOKER 4 and AS HERC remain separate future work items and were not changed or merged into this sports UI.
