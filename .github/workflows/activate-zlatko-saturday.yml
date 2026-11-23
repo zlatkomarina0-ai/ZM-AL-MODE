@@ -94,3 +94,27 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Upload OpenRouter key only when configured
+        if: env.OPENROUTER_API_KEY != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
+          secrets: |
+            OPENROUTER_API_KEY
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+      - name: Upload Groq key only when configured
+        if: env.GROQ_API_KEY != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'joker3-api'
+          command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
+          secrets: |
+            GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
