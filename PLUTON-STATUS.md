@@ -98,3 +98,10 @@ GitHub Actions runs the PLUTON unit tests (`npm run test:pluton`) and `npm run b
 - CORS is not authentication and this Worker has no robust per-user rate limit. Configure Cloudflare edge rate limiting and an access/authentication layer before public use.
 - Tests cover mock isolation, missing secret, mocked Gemini success, quota errors, validation and fixed upstream endpoint. No live Gemini API call was made during development.
 - Not deployed. Owner must fix CLOUDFLARE_API_TOKEN, deploy manually, then configure GEMINI_API_KEY as a Worker secret. The 1,000 BR target is conceptual; activeWorkers is 0.
+
+
+## JOKER 3 — Gemini route hardening follow-up
+- Pinned the Gemini endpoint to the currently documented stable model ID `gemini-3.8-flash` rather than a moving `gemini-flash-latest` alias. Model availability and free quota still depend on Google.
+- Added a required Cloudflare Worker Rate Limiting binding for the Gemini route: approximate 10 requests per client IP per 60 seconds. The route fails closed if the binding is absent and does not send the provider request when throttled.
+- Normalizes consecutive same-role messages and validates that Gemini conversation history begins and ends with a user message, reducing malformed provider requests.
+- This is not user authentication or a strict global quota. No live Gemini request was made. Deployment still requires valid Cloudflare credentials and the server-side GEMINI_API_KEY secret.

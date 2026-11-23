@@ -7,7 +7,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 const MAX_MESSAGE_CHARS = 4000;
 const MAX_TOTAL_CHARS = 20000;
 const PLANNED_BR = 1000;
-const GEMINI_MODEL = 'gemini-flash-latest';
+const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
 const securityHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -87,17 +87,44 @@ async function geminiChatCompletion(request, origin, env) {
   if (parsed.response) return parsed.response;
   const messages = parsed.body.messages;
   const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n').slice(0, MAX_MESSAGE_CHARS);
-  const contents = messages.filter(m => m.role !== 'system').map(m => ({
+  const rawContents = messages.filter(m => m.role !== 'system').map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
   }));
-  if (!contents.some(m => m.role === 'user')) {
+  if (!rawContents.some(m => m.role === 'user')) {
     return errorResponse('At least one user message is required for Gemini.', 400, origin);
+  }
+  if (rawContents[0].role !== 'user' || rawContents[rawContents.length - 1].role !== 'user') {
+    return errorResponse('Gemini chat history must start and end with a user message (system instructions are separate).', 400, origin);
+  }
+  // Gemini chat history alternates user/model turns. Merge adjacent same-role
+  // entries rather than sending an invalid sequence to the provider.
+  const contents = [];
+  for (const item of rawContents) {
+    const previous = contents[contents.length - 1];
+    if (previous && previous.role === item.role) {
+      previous.parts[0].text += '\\n\\n' + item.parts[0].text;
+    } else {
+      contents.push({ role: item.role, parts: [{ text: item.parts[0].text }] });
+    }
   }
   const payload = { contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } };
   if (systemText) payload.systemInstruction = { parts: [{ text: systemText }] };
   let upstream;
   try {
+    if (!env.GEMINI_RATE_LIMITER || typeof env.GEMINI_RATE_LIMITER.limit !== 'function') {
+      return errorResponse('Gemini route is disabled until the Cloudflare rate-limit binding is configured.', 503, origin, 'gemini_rate_limit_not_configured');
+    }
+    const clientKey = request.headers.get('cf-connecting-ip') || 'unknown-client';
+    let allowance;
+    try {
+      allowance = await env.GEMINI_RATE_LIMITER.limit({ key: 'gemini:' + clientKey });
+    } catch {
+      return errorResponse('Gemini rate-limit check failed. Request blocked; no provider request was sent.', 503, origin, 'gemini_rate_limit_unavailable');
+    }
+    if (!allowance || allowance.success !== true) {
+      return errorResponse('Gemini request limit reached. Wait before trying again; no provider request was sent.', 429, origin, 'gemini_edge_rate_limited');
+    }
     upstream = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
@@ -143,7 +170,7 @@ export default {
     if (url.pathname === '/health' && request.method === 'GET') return json({
       ok: true, system: 'JOKER 3', component: 'External PLUTON API',
       mode: 'mock-plus-optional-gemini-proxy', mockRouteProviderCalls: false,
-      geminiRoute: '/v1/gemini/chat/completions', geminiConfigured: Boolean(env && env.GEMINI_API_KEY),
+      geminiRoute: '/v1/gemini/chat/completions', geminiConfigured: Boolean(env && env.GEMINI_API_KEY), geminiRateLimitConfigured: Boolean(env && env.GEMINI_RATE_LIMITER),
       capacity: { plannedBR: PLANNED_BR, activeWorkers: 0 },
       warning: '1,000 BR is a planned label, not deployed compute. CORS is not authentication; configure edge rate limits/auth before public use.',
     }, 200, origin);

@@ -1,4 +1,4 @@
-name: Deploy JOKER 3 Mock API
+name: Deploy JOKER 3 External PLUTON API (Mock + Gemini)
 on:
   # Manual-only: requires a valid Cloudflare Workers token in repository secrets.
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Deploy JOKER 3 mock API Worker
+      - name: Deploy JOKER 3 External PLUTON Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
