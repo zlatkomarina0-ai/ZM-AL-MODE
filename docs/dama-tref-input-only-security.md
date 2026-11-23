@@ -5,7 +5,7 @@ DAMA TREF is the security-policy layer for PLUTON CODE. Approved source material
 
 ## Implemented
 - Exact-host HTTPS URL validation; validates both source URLs and every allowlist entry as public DNS hostnames, rejecting HTTP, URL credentials, non-default ports, unlisted hosts, IP-literal source URLs/allowlist entries, malformed DNS labels, common private/local IP ranges and metadata hostnames.
-- Default-deny outbound decision function. The only approved intent is a body-less GET to an allowlisted source; the module does not perform network requests.
+- Default-deny outbound decision function. The only approved intent is a body-less GET to an allowlisted source; the decision helper rejects explicit request-body flags and private payloads. The module does not perform network requests.
 - Least-privilege role checks for administrator, chief, worker and auditor.
 - Input size/type checks and heuristic quarantine for active HTML/script patterns.
 - Bounded audit-event helper and unit tests.
