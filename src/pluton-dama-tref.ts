@@ -25,10 +25,10 @@ function isPrivateHost(hostname: string): boolean {
   return false;
 }
 function isValidDnsHostname(hostname: string): boolean {
-  const host = hostname.toLowerCase().replace(/\\.$/, '');
+  const host = hostname.toLowerCase().replace(/\.$/, '');
   if (!host || host.length > 253 || host.includes(':') || host.startsWith('[') || host.endsWith(']')) return false;
   // Never allow IP literals as source allowlist entries; this also avoids alternate IPv4 forms.
-  if (/^\\d+(?:\\.\\d+){0,3}$/.test(host)) return false;
+  if (/^\d+(?:\.\d+){0,3}$/.test(host)) return false;
   const labels = host.split('.');
   if (labels.length < 2 || labels.some(label => label.length < 1 || label.length > 63)) return false;
   if (labels.some(label => !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label))) return false;
@@ -53,7 +53,8 @@ export function validateDamaTrefSourceUrl(input: string, allowedHosts: readonly 
   if (url.protocol !== 'https:') throw new Error('Only HTTPS sources are allowed.');
   if (url.username || url.password) throw new Error('Credentials in source URLs are forbidden.');
   if (url.port && url.port !== '443') throw new Error('Only the default HTTPS port is allowed.');
-  if (!isValidDnsHostname(url.hostname)) throw new Error('Only valid DNS hostnames are allowed; IP literals are blocked.');\n  if (isPrivateHost(url.hostname)) throw new Error('Private, local, or non-public host is blocked.');
+  if (!isValidDnsHostname(url.hostname)) throw new Error('Only valid DNS hostnames are allowed; IP literals are blocked.');
+  if (isPrivateHost(url.hostname)) throw new Error('Private, local, or non-public host is blocked.');
   if (!normalizeHosts(allowedHosts).has(url.hostname.toLowerCase().replace(/\.$/, ''))) throw new Error('Source host is not in the exact-host allowlist.');
   url.hash = '';
   return url.toString();
