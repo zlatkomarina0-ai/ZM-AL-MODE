@@ -103,7 +103,7 @@ async function geminiChatCompletion(request, origin, env) {
   for (const item of rawContents) {
     const previous = contents[contents.length - 1];
     if (previous && previous.role === item.role) {
-      previous.parts[0].text += '\\n\\n' + item.parts[0].text;
+      previous.parts[0].text += '\n\n' + item.parts[0].text;
     } else {
       contents.push({ role: item.role, parts: [{ text: item.parts[0].text }] });
     }
