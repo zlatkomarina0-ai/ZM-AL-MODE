@@ -1,4 +1,4 @@
-/**
+/** 
  * JOKER 2 — parallel coefficient-scanning line.
  * Configuration and analysis only; worker counts are logical targets, not provisioned machines.
  */
@@ -44,9 +44,13 @@ export function scanMatchCoefficients(matches: unknown[]): Joker2Coefficient[] {
   for (const item of matches) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) continue;
     const record = item as Record<string, unknown>;
-    const matchId = String(record.matchId ?? record.sifra ?? '');
-    const homeTeam = String(record.homeTeam ?? record.domakin ?? '');
-    const awayTeam = String(record.awayTeam ?? record.gosti ?? '');
+    const matchId = String(record.matchId ?? record.sifra ?? '').trim();
+    const homeTeam = String(record.homeTeam ?? record.domakin ?? '').trim();
+    const awayTeam = String(record.awayTeam ?? record.gosti ?? '').trim();
+
+    // Do not classify orphan odds that cannot be traced to a real match row.
+    if (!matchId || !homeTeam || !awayTeam) continue;
+
     const odds = record.odds;
     if (typeof odds !== 'object' || odds === null || Array.isArray(odds)) continue;
     for (const [market, rawValue] of Object.entries(odds as Record<string, unknown>)) {
