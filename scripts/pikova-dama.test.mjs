@@ -141,3 +141,20 @@ test('rejects access through inherited member keys and reserved member assignmen
   assert.throws(() => getPikovaProjectView(state, { id: 'toString', role: 'viewer' }, project.id), /Access denied/);
   assert.throws(() => grantPikovaRole(state, owner, project.id, '__proto__', 'viewer'), /reserved object key/);
 });
+
+test('rejects duplicate audit event IDs and non-scalar audit details in imported backups', () => {
+  const { state, project } = setup();
+  const duplicateAudit = structuredClone(state);
+  duplicateAudit.audit.push(
+    { id: 'audit-1', projectId: project.id, actorId: owner.id, action: 'read', targetId: 'x', timestamp: '2026-11-24T00:00:00.000Z' },
+    { id: 'audit-1', projectId: project.id, actorId: owner.id, action: 'write', targetId: 'y', timestamp: '2026-11-24T00:00:01.000Z' },
+  );
+  assert.throws(() => validatePikovaState(duplicateAudit), /duplicate audit event IDs/);
+
+  const invalidDetails = structuredClone(state);
+  invalidDetails.audit.push({
+    id: 'audit-2', projectId: project.id, actorId: owner.id, action: 'read', targetId: 'x',
+    timestamp: '2026-11-24T00:00:00.000Z', details: { nested: { secret: 'not allowed' } },
+  });
+  assert.throws(() => validatePikovaState(invalidDetails), /invalid audit details/);
+});
