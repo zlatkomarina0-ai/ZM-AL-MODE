@@ -96,10 +96,10 @@ test('Gemini quota errors are sanitized and do not trigger paid fallback', async
     assert.doesNotMatch(text, /private upstream diagnostic/);
     const body = JSON.parse(text);
     assert.equal(body.error.providerDiagnostics[0].provider, 'google-gemini-api');
-    assert.equal(body.providerDiagnostics[0].category, 'rate_limit_or_quota');
-    assert.equal(body.providerDiagnostics[0].httpStatus, 429);
-    assert.equal(body.providerDiagnostics[0].retryAfterSeconds, 30);
-    assert.equal(body.providerDiagnostics[0].retryTimeKnown, true);
+    assert.equal(body.error.providerDiagnostics[0].category, 'rate_limit_or_quota');
+    assert.equal(body.error.providerDiagnostics[0].httpStatus, 429);
+    assert.equal(body.error.providerDiagnostics[0].retryAfterSeconds, 30);
+    assert.equal(body.error.providerDiagnostics[0].retryTimeKnown, true);
     assert.equal(body.limitStatus.providerQuotaNumbersKnown, false);
   } finally { globalThis.fetch = originalFetch; }
 });
