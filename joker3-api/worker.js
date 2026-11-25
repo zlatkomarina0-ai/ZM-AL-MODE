@@ -34,7 +34,7 @@ function retryAfterSeconds(headers) {
   const value = headers?.get?.('Retry-After');
   if (!value) return null;
   let seconds;
-  if (/^\\d{1,7}$/.test(value.trim())) seconds = Number(value.trim());
+  if (/^\d{1,7}$/.test(value.trim())) seconds = Number(value.trim());
   else {
     const date = Date.parse(value);
     if (!Number.isFinite(date)) return null;
