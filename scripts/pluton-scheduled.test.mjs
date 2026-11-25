@@ -52,6 +52,8 @@ test('skips duplicate normalized matches and marks identical home/away teams inv
   assert.equal(report.counts.skipped, 1);
   assert.equal(report.counts.failed, 1);
   assert.equal(report.tasks[1].valid, false);
+  // A skipped duplicate must not consume a chief slot in the round-robin assignment.
+  assert.equal(report.tasks[1].chiefId, 'CHIEF-0002');
 });
 
 test('rejects malformed or unsupported bulletin JSON', () => {

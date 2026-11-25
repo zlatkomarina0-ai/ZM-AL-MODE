@@ -150,7 +150,7 @@ export function processBulletin(input, generatedAt = new Date().toISOString(), c
       matchId,
       homeTeam,
       awayTeam,
-      chiefId: 'CHIEF-' + String((index % chiefCount) + 1).padStart(4, '0'),
+      chiefId: 'CHIEF-' + String((tasks.length % chiefCount) + 1).padStart(4, '0'),
       status: valid ? 'done' : 'failed',
       attempts: 1,
       valid,
