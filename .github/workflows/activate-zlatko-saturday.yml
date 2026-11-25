@@ -94,9 +94,10 @@ jobs:
           [[ -n "$GROQ_API_KEY" ]] && echo "has_groq=true" >> "$GITHUB_OUTPUT" || echo "has_groq=false" >> "$GITHUB_OUTPUT"
 
       - name: Deploy Worker and upload Gemini key as a Worker secret
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '4.136.3'
           workingDirectory: 'joker3-api'
           command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
           secrets: |
@@ -106,9 +107,10 @@ jobs:
 
       - name: Upload OpenRouter key only when configured
         if: steps.optional-secrets.outputs.has_openrouter == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '4.136.3'
           workingDirectory: 'joker3-api'
           command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
           secrets: |
@@ -118,9 +120,10 @@ jobs:
 
       - name: Upload Groq key only when configured
         if: steps.optional-secrets.outputs.has_groq == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '4.136.3'
           workingDirectory: 'joker3-api'
           command: deploy worker.js --name joker3-pluton-mock-api --compatibility-date 2026-11-23
           secrets: |
