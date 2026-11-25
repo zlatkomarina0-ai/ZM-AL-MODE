@@ -32,6 +32,7 @@ jobs:
       - name: Process bulletin (no provider API calls)
         env:
           PLUTON_BULLETIN_PATH: data/bulletin.json
+          PLUTON_CHIEF_COUNT: '400'
           PLUTON_OUTPUT_DIR: artifacts
         run: node scripts/pluton-scheduled.mjs
 

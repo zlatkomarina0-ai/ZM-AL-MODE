@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const MAX_RECORDS = 10000;
-const CHIEF_COUNT = 1000;
+const DEFAULT_CHIEF_COUNT = 400;
+const ALLOWED_CHIEF_COUNTS = new Set([100, 400, 1000]);
 const TIME_ZONE = 'Europe/Skopje';
 const CSV_COLUMNS = [
   'ID', 'matchId', 'homeTeam', 'awayTeam', 'chiefId', 'status', 'attempts',
@@ -89,7 +90,8 @@ function stableId(matchId, homeNormalized, awayNormalized) {
     .slice(0, 32);
 }
 
-export function processBulletin(input, generatedAt = new Date().toISOString()) {
+export function processBulletin(input, generatedAt = new Date().toISOString(), chiefCount = Number(process.env.PLUTON_CHIEF_COUNT || DEFAULT_CHIEF_COUNT)) {
+  if (!ALLOWED_CHIEF_COUNTS.has(chiefCount)) throw new Error('Chief count must be 100, 400, or 1000.');
   let parsed;
   try {
     parsed = JSON.parse(input);
@@ -148,7 +150,7 @@ export function processBulletin(input, generatedAt = new Date().toISOString()) {
       matchId,
       homeTeam,
       awayTeam,
-      chiefId: 'CHIEF-' + String((index % CHIEF_COUNT) + 1).padStart(4, '0'),
+      chiefId: 'CHIEF-' + String((index % chiefCount) + 1).padStart(4, '0'),
       status: valid ? 'done' : 'failed',
       attempts: 1,
       valid,
@@ -242,6 +244,7 @@ export async function runScheduledJob({
   outputDirectory = process.env.PLUTON_OUTPUT_DIR || 'artifacts',
   eventName = process.env.GITHUB_EVENT_NAME || 'manual',
   now = new Date(),
+  chiefCount = Number(process.env.PLUTON_CHIEF_COUNT || DEFAULT_CHIEF_COUNT),
 } = {}) {
   const generatedAt = now.toISOString();
 
@@ -296,10 +299,10 @@ export async function runScheduledJob({
   if (/\.(txt|text)$/i.test(sourcePath)) {
     const matches = parseSportLifeText(raw);
     if (!matches.length) throw new Error('No matches recognized in the raw SportLife text. Check the source format and final-odds blocks.');
-    report = processBulletin(JSON.stringify({ matches }), generatedAt);
+    report = processBulletin(JSON.stringify({ matches }), generatedAt, chiefCount);
     report.inputFormat = 'sportlife-text';
   } else {
-    report = processBulletin(raw, generatedAt);
+    report = processBulletin(raw, generatedAt, chiefCount);
     report.inputFormat = 'json';
   }
   report.source = sourcePath;

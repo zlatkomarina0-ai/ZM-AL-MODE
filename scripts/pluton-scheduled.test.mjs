@@ -22,6 +22,25 @@ test('processes matches locally and assigns deterministic chief IDs', () => {
   assert.equal(report.tasks[0].ID.length, 32);
 });
 
+test('defaults to 400 logical chiefs and supports the configured 100/400/1000 options', () => {
+  const matches = Array.from({ length: 471 }, (_, index) => ({
+    matchId: 'M-' + index,
+    homeTeam: 'Home ' + index,
+    awayTeam: 'Away ' + index,
+  }));
+  const report = processBulletin(JSON.stringify({ matches }));
+  assert.equal(report.counts.imported, 471);
+  assert.equal(report.counts.assignedChiefs, 400);
+  assert.equal(report.tasks[399].chiefId, 'CHIEF-0400');
+  assert.equal(report.tasks[400].chiefId, 'CHIEF-0001');
+
+  const smaller = processBulletin(JSON.stringify({ matches: matches.slice(0, 101) }), undefined, 100);
+  assert.equal(smaller.counts.assignedChiefs, 100);
+  const larger = processBulletin(JSON.stringify({ matches }), undefined, 1000);
+  assert.equal(larger.counts.assignedChiefs, 471);
+  assert.throws(() => processBulletin(JSON.stringify({ matches }), undefined, 500), /100, 400, or 1000/);
+});
+
 test('skips duplicate normalized matches and marks identical home/away teams invalid', () => {
   const report = processBulletin(JSON.stringify({ matches: [
     { matchId: 'M-1', homeTeam: 'FC ÁBC', awayTeam: 'United' },
