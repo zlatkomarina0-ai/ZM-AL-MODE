@@ -154,7 +154,7 @@ async function geminiChatCompletion(request, origin, env) {
       choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: result.choices[0].finish_reason || 'stop' }],
       usage: { prompt_tokens: Number(usage.prompt_tokens || 0), completion_tokens: Number(usage.completion_tokens || 0), total_tokens: Number(usage.total_tokens || 0) },
       simulated: false, provider, providerCalls: true, outboundNetwork: true,
-      fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: failures.slice() },
+      fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: failures.map(item => item.split(':')[0]), providerDiagnostics: providerDiagnostics.slice() },
       costPolicy: 'OpenRouter uses openrouter/free. Groq is attempted only when GROQ_FREE_TIER_CONFIRMED=true and a model is configured; provider account quotas apply.',
       limitStatus: { state: 'answered', attemptedAfter: failures.map(item => item.split(':')[0]), providerQuotaNumbersKnown: false },
     }, 200, origin);
@@ -188,7 +188,7 @@ async function geminiChatCompletion(request, origin, env) {
         choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: result.candidates[0].finishReason || 'stop' }],
         usage: { prompt_tokens: Number(usage.promptTokenCount || 0), completion_tokens: Number(usage.candidatesTokenCount || 0), total_tokens: Number(usage.totalTokenCount || 0) },
         simulated: false, provider: 'google-gemini-api', providerCalls: true, outboundNetwork: true,
-        fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: [] },
+        fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: [], providerDiagnostics: [] },
         costPolicy: 'Gemini usage depends on the Google project free-tier eligibility and quota.',
         limitStatus: { state: 'answered', attemptedAfter: [], providerQuotaNumbersKnown: false },
       }, 200, origin);
