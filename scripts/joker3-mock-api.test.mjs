@@ -84,7 +84,7 @@ test('Gemini proxy uses fixed Google endpoint and returns compatible response', 
 
 test('Gemini quota errors are sanitized and do not trigger paid fallback', async () => {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response('private upstream diagnostic', { status: 429 });
+  globalThis.fetch = async () => new Response('private upstream diagnostic', { status: 429, headers: { 'Retry-After': '30' } });
   try {
     const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -94,6 +94,13 @@ test('Gemini quota errors are sanitized and do not trigger paid fallback', async
     assert.equal(response.status, 503);
     assert.match(text, /No paid fallback/);
     assert.doesNotMatch(text, /private upstream diagnostic/);
+    const body = JSON.parse(text);
+    assert.equal(body.providerDiagnostics[0].provider, 'google-gemini-api');
+    assert.equal(body.providerDiagnostics[0].category, 'rate_limit_or_quota');
+    assert.equal(body.providerDiagnostics[0].httpStatus, 429);
+    assert.equal(body.providerDiagnostics[0].retryAfterSeconds, 30);
+    assert.equal(body.providerDiagnostics[0].retryTimeKnown, true);
+    assert.equal(body.limitStatus.providerQuotaNumbersKnown, false);
   } finally { globalThis.fetch = originalFetch; }
 });
 
