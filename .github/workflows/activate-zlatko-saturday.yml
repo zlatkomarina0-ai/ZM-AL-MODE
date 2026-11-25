@@ -1,10 +1,7 @@
 name: ZLATKO AI MODE Saturday activation
 
+# Provider deployment is manual-only to prevent unattended activation of API-backed routes.
 on:
-  schedule:
-    # 07:30 Europe/Skopje across winter/summer time; the guard skips the other UTC slot.
-    - cron: '30 5 * * 6'
-    - cron: '30 6 * * 6'
   workflow_dispatch:
 
 permissions:
