@@ -30,6 +30,35 @@ function errorResponse(message, status, origin, type = 'joker3_api_error') {
 function isRecord(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+function retryAfterSeconds(headers) {
+  const value = headers?.get?.('Retry-After');
+  if (!value) return null;
+  let seconds;
+  if (/^\\d{1,7}$/.test(value.trim())) seconds = Number(value.trim());
+  else {
+    const date = Date.parse(value);
+    if (!Number.isFinite(date)) return null;
+    seconds = Math.ceil((date - Date.now()) / 1000);
+  }
+  return Number.isFinite(seconds) && seconds >= 0 && seconds <= 604800 ? seconds : null;
+}
+function providerFailure(provider, error, upstream = null) {
+  const status = Number.isInteger(upstream?.status) ? upstream.status :
+    (Number.isInteger(error?.status) ? error.status : null);
+  let category = 'unavailable';
+  if (status === 401 || status === 403) category = 'authentication_or_permission';
+  else if (status === 429) category = 'rate_limit_or_quota';
+  else if (status === 408 || error?.name === 'TimeoutError' || error?.name === 'AbortError') category = 'timeout';
+  else if (status !== null && status >= 500) category = 'provider_server_error';
+  else if (status !== null && status >= 400) category = 'request_rejected';
+  return {
+    provider,
+    category,
+    ...(status !== null ? { httpStatus: status } : {}),
+    ...(retryAfterSeconds(upstream?.headers) !== null ? { retryAfterSeconds: retryAfterSeconds(upstream.headers) } : {}),
+    retryTimeKnown: retryAfterSeconds(upstream?.headers) !== null,
+  };
+}
 async function readMessages(request, origin, maxMessages) {
   if (!(request.headers.get('Content-Type') || '').toLowerCase().startsWith('application/json')) {
     return { response: errorResponse('Content-Type must be application/json.', 415, origin) };
@@ -106,9 +135,14 @@ async function geminiChatCompletion(request, origin, env) {
     return errorResponse('At least one user message is required and the latest message must be from the user.', 400, origin);
   }
   const failures = [];
+  const providerDiagnostics = [];
+  const recordFailure = (provider, error, upstream = null) => {
+    failures.push(provider + ':' + (Number.isInteger(upstream?.status) ? 'http_' + upstream.status : String(error?.name || 'request_failed').slice(0, 40)));
+    providerDiagnostics.push(providerFailure(provider, error, upstream));
+  };
   const timeout = () => AbortSignal.timeout(20000);
   const normalizeOpenAI = async (provider, upstream, model) => {
-    if (!upstream.ok) throw new Error(provider + '_http_' + upstream.status);
+    if (!upstream.ok) { const error = new Error(provider + '_http_' + upstream.status); error.status = upstream.status; error.retryAfterSeconds = retryAfterSeconds(upstream.headers); throw error; }
     const result = await upstream.json();
     const answer = result?.choices?.[0]?.message?.content;
     if (typeof answer !== 'string' || !answer.trim()) throw new Error(provider + '_empty_response');
@@ -121,11 +155,13 @@ async function geminiChatCompletion(request, origin, env) {
       simulated: false, provider, providerCalls: true, outboundNetwork: true,
       fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: failures.slice() },
       costPolicy: 'OpenRouter uses openrouter/free. Groq is attempted only when GROQ_FREE_TIER_CONFIRMED=true and a model is configured; provider account quotas apply.',
+      limitStatus: { state: 'answered', attemptedAfter: failures.map(item => item.split(':')[0]), providerQuotaNumbersKnown: false },
     }, 200, origin);
   };
   // 1. Gemini. Errors, timeouts, and quota responses fall through to the next
   // configured provider. Never expose upstream bodies or API keys to clients.
   if (typeof env.GEMINI_API_KEY === 'string' && env.GEMINI_API_KEY.trim().length >= 10) {
+    let upstreamForFailure = null;
     try {
       const rawContents = chatMessages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
       const contents = [];
@@ -140,7 +176,7 @@ async function geminiChatCompletion(request, origin, env) {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
         body: JSON.stringify(payload), signal: timeout(),
       });
-      if (!upstream.ok) throw new Error('gemini_http_' + upstream.status);
+      if (!upstream.ok) { const error = new Error('gemini_http_' + upstream.status); error.status = upstream.status; error.retryAfterSeconds = retryAfterSeconds(upstream.headers); throw error; }
       const result = await upstream.json();
       const parts = result?.candidates?.[0]?.content?.parts;
       const answer = Array.isArray(parts) ? parts.filter(p => typeof p.text === 'string').map(p => p.text).join('') : '';
@@ -154,8 +190,9 @@ async function geminiChatCompletion(request, origin, env) {
         simulated: false, provider: 'google-gemini-api', providerCalls: true, outboundNetwork: true,
         fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: [] },
         costPolicy: 'Gemini usage depends on the Google project free-tier eligibility and quota.',
+        limitStatus: { state: 'answered', attemptedAfter: [], providerQuotaNumbersKnown: false },
       }, 200, origin);
-    } catch (error) { failures.push('google-gemini-api:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+    } catch (error) { recordFailure('google-gemini-api', error); }
   } else failures.push('google-gemini-api:not_configured');
 
   // 2. OpenRouter free router. This model ID routes only to free models.
@@ -171,7 +208,7 @@ async function geminiChatCompletion(request, origin, env) {
         body: JSON.stringify(payload), signal: timeout(),
       });
       return await normalizeOpenAI('openrouter-free', upstream, 'openrouter/free');
-    } catch (error) { failures.push('openrouter-free:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+    } catch (error) { recordFailure('openrouter-free', error); }
   } else failures.push('openrouter-free:not_configured');
 
   // 3. Groq is opt-in only when the owner confirms the chosen model/account is
@@ -186,7 +223,7 @@ async function geminiChatCompletion(request, origin, env) {
         body: JSON.stringify(payload), signal: timeout(),
       });
       return await normalizeOpenAI('groq-free-tier', upstream, env.GROQ_MODEL);
-    } catch (error) { failures.push('groq-free-tier:' + (String(error?.message || 'request_failed').slice(0, 80))); }
+    } catch (error) { recordFailure('groq-free-tier', error); }
   } else failures.push('groq-free-tier:not_configured_or_not_confirmed_free');
 
   return json({
@@ -194,9 +231,11 @@ async function geminiChatCompletion(request, origin, env) {
       type: 'all_free_ai_providers_failed',
       message: 'No configured free AI provider could answer. Check provider keys, free-tier quotas, model access, and Cloudflare logs. No paid fallback was used.',
       providers: failures.map(item => item.split(':')[0]),
+      providerDiagnostics,
     },
     simulated: false, providerCalls: failures.some(item => !item.endsWith('not_configured') && !item.endsWith('not_configured_or_not_confirmed_free')),
     costPolicy: 'No paid fallback. OpenRouter uses its free-only router; Groq is skipped unless its free tier is explicitly confirmed.',
+    limitStatus: { state: 'unavailable', providerQuotaNumbersKnown: false, retryTimeKnown: providerDiagnostics.some(item => item.retryTimeKnown), note: 'Only provider-supplied retry times and HTTP status categories are reported; provider quota limits are not guessed.' },
   }, 503, origin);
 }
 export default {
