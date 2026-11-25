@@ -51,12 +51,13 @@ function providerFailure(provider, error, upstream = null) {
   else if (status === 408 || error?.name === 'TimeoutError' || error?.name === 'AbortError') category = 'timeout';
   else if (status !== null && status >= 500) category = 'provider_server_error';
   else if (status !== null && status >= 400) category = 'request_rejected';
+  const retrySeconds = retryAfterSeconds(upstream?.headers) ?? (Number.isInteger(error?.retryAfterSeconds) ? error.retryAfterSeconds : null);
   return {
     provider,
     category,
     ...(status !== null ? { httpStatus: status } : {}),
-    ...(retryAfterSeconds(upstream?.headers) !== null ? { retryAfterSeconds: retryAfterSeconds(upstream.headers) } : {}),
-    retryTimeKnown: retryAfterSeconds(upstream?.headers) !== null,
+    ...(retrySeconds !== null ? { retryAfterSeconds: retrySeconds } : {}),
+    retryTimeKnown: retrySeconds !== null,
   };
 }
 async function readMessages(request, origin, maxMessages) {
@@ -161,7 +162,6 @@ async function geminiChatCompletion(request, origin, env) {
   // 1. Gemini. Errors, timeouts, and quota responses fall through to the next
   // configured provider. Never expose upstream bodies or API keys to clients.
   if (typeof env.GEMINI_API_KEY === 'string' && env.GEMINI_API_KEY.trim().length >= 10) {
-    let upstreamForFailure = null;
     try {
       const rawContents = chatMessages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
       const contents = [];
