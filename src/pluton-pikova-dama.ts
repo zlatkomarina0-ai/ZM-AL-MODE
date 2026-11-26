@@ -179,12 +179,14 @@ export function validatePikovaState(input: unknown): PikovaState {
   }
 
   const audit: PikovaAuditEvent[] = [];
+  const auditIds = new Set<string>();
   for (const value of input.audit) {
     if (!isRecord(value) || !nonEmptyString(value.id) || !nonEmptyString(value.projectId) ||
         !projectIds.has(value.projectId) || !nonEmptyString(value.actorId) ||
         !nonEmptyString(value.action) || !nonEmptyString(value.targetId) || !nonEmptyString(value.timestamp)) {
       throw new Error('Backup contains an invalid audit event.');
     }
+    if (auditIds.has(value.id)) throw new Error('Backup contains duplicate audit event IDs.');
     let details: PikovaAuditEvent['details'];
     if (value.details !== undefined) {
       if (!isRecord(value.details) || Object.values(value.details).some(item =>
@@ -193,6 +195,7 @@ export function validatePikovaState(input: unknown): PikovaState {
       }
       details = value.details as PikovaAuditEvent['details'];
     }
+    auditIds.add(value.id);
     audit.push({
       id: value.id, projectId: value.projectId, actorId: value.actorId,
       action: value.action, targetId: value.targetId, timestamp: value.timestamp,
