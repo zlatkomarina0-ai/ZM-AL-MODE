@@ -233,7 +233,7 @@ async function geminiChatCompletion(request, origin, env) {
       providers: failures.map(item => item.split(':')[0]),
       providerDiagnostics,
     },
-    simulated: false, providerCalls: failures.some(item => !item.endsWith('not_configured') && !item.endsWith('not_configured_or_not_confirmed_free')),
+    simulated: false, providerCalls: failures.some(item => !item.includes(':not_configured')),
     costPolicy: 'No paid fallback. Gemini is skipped unless GEMINI_FREE_TIER_CONFIRMED=true; OpenRouter uses openrouter/free; Groq is skipped unless its free tier is explicitly confirmed.'
     limitStatus: { state: 'unavailable', providerQuotaNumbersKnown: false, retryTimeKnown: providerDiagnostics.some(item => item.retryTimeKnown), note: 'Only provider-supplied retry times and HTTP status categories are reported; provider quota limits are not guessed.' },
   }, 503, origin);
