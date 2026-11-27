@@ -29,3 +29,11 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || (echo "CLOUDFLARE_API_TOKEN GitHub secret is missing" && exit 1)
           test -n "$GEMINI_API_KEY" || (echo "GEMINI_API_KEY GitHub secret is missing" && exit 1)
           npx --yes wrangler@4 secret put GEMINI_API_KEY <<< "$GEMINI_API_KEY"
+      - name: Smoke test Gemini chat endpoint
+        run: |
+          set -euo pipefail
+          response="$(curl --silent --show-error --fail-with-body \
+            -X POST "https://zlatko-gemini-free.zlatkomarina0.workers.dev/v1/chat" \
+            -H "Content-Type: application/json" \
+            --data '{"messages":[{"role":"user","content":"Reply with exactly: ZLATKO_OK"}]}')"
+          printf '%s' "$response" | python -c 'import json,sys; d=json.load(sys.stdin); assert d.get("ok") is True, "Worker did not return ok=true: " + json.dumps(d); assert isinstance(d.get("text"), str) and d["text"].strip(), "Gemini returned empty text"; print("Gemini chat smoke test passed; model=" + str(d.get("model")) + "; response received.")'
