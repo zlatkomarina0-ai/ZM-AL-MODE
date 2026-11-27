@@ -57,7 +57,7 @@ export default {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.3 } }),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(55000),
       });
       const data = await upstream.json().catch(() => ({}));
       if (!upstream.ok) {
@@ -67,7 +67,7 @@ export default {
       if (!text) return reply({ ok: false, error: 'Gemini returned no text.' }, 502, origin);
       return reply({ ok: true, model: MODEL, text }, 200, origin);
     } catch {
-      return reply({ ok: false, error: 'Gemini request timed out or failed.' }, 502, origin);
+      return reply({ ok: false, error: 'Gemini request timed out after 55 seconds or the upstream connection failed.' }, 502, origin);
     }
   },
 };
