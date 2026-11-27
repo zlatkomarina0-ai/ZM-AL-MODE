@@ -1,0 +1,12 @@
+name = "zlatko-gemini-free"
+main = "zlatko-gemini-free/worker.js"
+compatibility_date = "2026-11-27"
+
+# Secret is managed with: wrangler secret put GEMINI_API_KEY
+[[ratelimits]]
+name = "GEMINI_RATE_LIMITER"
+namespace_id = "10013008"
+
+[ratelimits.simple]
+limit = 10
+period = 60
