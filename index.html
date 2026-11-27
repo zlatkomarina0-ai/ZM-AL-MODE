@@ -191,7 +191,9 @@
     }
 
     let vnesenPin = ""; 
-    const TAEN_KOD = "21031983"; 
+    const TAEN_KOD = "0000";
+    const PIN_LOCK_ENABLED = false; // Привремено исклучен PIN екран.
+    if (!PIN_LOCK_ENABLED) document.getElementById("lockScreen").style.display = "none"; 
     function vnesiBroj(broj) { 
         if(vnesenPin.length < TAEN_KOD.length) { 
             vnesenPin += broj; 
