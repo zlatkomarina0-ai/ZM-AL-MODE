@@ -68,7 +68,7 @@ test('Gemini proxy uses fixed Google endpoint and returns compatible response', 
     const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'system', content: 'Be concise' }, { role: 'user', content: 'hello' }] }),
-    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.choices[0].message.content, 'Gemini test response');
@@ -89,7 +89,7 @@ test('Gemini quota errors are sanitized and do not trigger paid fallback', async
     const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
-    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     const text = await response.text();
     assert.equal(response.status, 503);
     assert.match(text, /No paid fallback/);
@@ -118,13 +118,13 @@ test('request validation, CORS, methods and fixed upstream boundary are enforced
   const limited = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
-  }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: false }) } });
+  }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GEMINI_RATE_LIMITER: { limit: async () => ({ success: false }) } });
   assert.equal(limited.status, 429);
   assert.equal((await limited.json()).error.type, 'ai_edge_rate_limited');
   const brokenLimiter = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
-  }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => { throw new Error('internal detail'); } } });
+  }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GEMINI_RATE_LIMITER: { limit: async () => { throw new Error('internal detail'); } } });
   assert.equal(brokenLimiter.status, 503);
   assert.doesNotMatch(await brokenLimiter.text(), /internal detail/);
   const source = await readFile(new URL('../joker3-api/worker.js', import.meta.url), 'utf8');
@@ -149,7 +149,7 @@ test('Gemini proxy joins consecutive same-role messages with real line breaks', 
         { role: 'user', content: 'first' },
         { role: 'user', content: 'second' },
       ] }),
-    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
+    }), { GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) } });
     assert.equal(response.status, 200);
     assert.equal(captured.contents.length, 1);
     assert.equal(captured.contents[0].parts[0].text, 'first\n\nsecond');
@@ -178,7 +178,7 @@ test('JOKER 4 fallback tries Gemini then OpenRouter free router and stops on suc
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
     }), {
-      GEMINI_API_KEY: 'test-secret-gemini-key', OPENROUTER_API_KEY: 'test-openrouter-key',
+      GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', OPENROUTER_API_KEY: 'test-openrouter-key',
       GROQ_API_KEY: 'test-groq-key', GROQ_MODEL: 'test-model', GROQ_FREE_TIER_CONFIRMED: 'true',
       GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) },
     });
@@ -205,12 +205,32 @@ test('Groq fallback is skipped unless free tier is explicitly confirmed and mode
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
     }), {
-      GEMINI_API_KEY: 'test-secret-gemini-key', GROQ_API_KEY: 'test-groq-key', GROQ_MODEL: 'some-model',
+      GEMINI_API_KEY: 'test-secret-gemini-key', GEMINI_FREE_TIER_CONFIRMED: 'true', GROQ_API_KEY: 'test-groq-key', GROQ_MODEL: 'some-model',
       GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) },
     });
     assert.equal(response.status, 503);
     assert.equal(calls.length, 1);
     assert.equal(calls[0].includes('generativelanguage.googleapis.com'), true);
     assert.match(await response.text(), /No paid fallback was used/);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('Gemini provider is skipped unless the owner explicitly confirms free-tier-only use', async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => { called = true; throw new Error('provider must not be called'); };
+  try {
+    const response = await worker.fetch(new Request('https://mock.example/v1/gemini/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'hello' }] }),
+    }), {
+      GEMINI_API_KEY: 'test-secret-gemini-key',
+      GEMINI_RATE_LIMITER: { limit: async () => ({ success: true }) },
+    });
+    const body = await response.json();
+    assert.equal(response.status, 503);
+    assert.equal(called, false);
+    assert.equal(body.providerCalls, false);
+    assert.match(body.error.providers.join(','), /google-gemini-api/);
   } finally { globalThis.fetch = originalFetch; }
 });

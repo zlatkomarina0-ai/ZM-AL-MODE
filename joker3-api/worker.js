@@ -161,7 +161,7 @@ async function geminiChatCompletion(request, origin, env) {
   };
   // 1. Gemini. Errors, timeouts, and quota responses fall through to the next
   // configured provider. Never expose upstream bodies or API keys to clients.
-  if (typeof env.GEMINI_API_KEY === 'string' && env.GEMINI_API_KEY.trim().length >= 10) {
+  if (env.GEMINI_FREE_TIER_CONFIRMED === 'true' && typeof env.GEMINI_API_KEY === 'string' && env.GEMINI_API_KEY.trim().length >= 10) {
     try {
       const rawContents = chatMessages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
       const contents = [];
@@ -189,11 +189,11 @@ async function geminiChatCompletion(request, origin, env) {
         usage: { prompt_tokens: Number(usage.promptTokenCount || 0), completion_tokens: Number(usage.candidatesTokenCount || 0), total_tokens: Number(usage.totalTokenCount || 0) },
         simulated: false, provider: 'google-gemini-api', providerCalls: true, outboundNetwork: true,
         fallback: { enabled: true, sequence: ['google-gemini-api', 'openrouter-free', 'groq-free-tier'], attemptedAfter: [], providerDiagnostics: [] },
-        costPolicy: 'Gemini usage depends on the Google project free-tier eligibility and quota.',
+        costPolicy: 'Gemini is attempted only when GEMINI_FREE_TIER_CONFIRMED=true; this is an owner confirmation, not an API-enforced billing lock. Verify Google project billing and quota settings separately.',
         limitStatus: { state: 'answered', attemptedAfter: [], providerQuotaNumbersKnown: false },
       }, 200, origin);
     } catch (error) { recordFailure('google-gemini-api', error); }
-  } else failures.push('google-gemini-api:not_configured');
+  } else failures.push('google-gemini-api:not_configured_or_free_tier_not_confirmed');
 
   // 2. OpenRouter free router. This model ID routes only to free models.
   if (typeof env.OPENROUTER_API_KEY === 'string' && env.OPENROUTER_API_KEY.trim().length >= 10) {
@@ -233,8 +233,8 @@ async function geminiChatCompletion(request, origin, env) {
       providers: failures.map(item => item.split(':')[0]),
       providerDiagnostics,
     },
-    simulated: false, providerCalls: failures.some(item => !item.endsWith('not_configured') && !item.endsWith('not_configured_or_not_confirmed_free')),
-    costPolicy: 'No paid fallback. OpenRouter uses its free-only router; Groq is skipped unless its free tier is explicitly confirmed.',
+    simulated: false, providerCalls: failures.some(item => !item.includes(':not_configured')),
+    costPolicy: 'No paid fallback. Gemini is skipped unless GEMINI_FREE_TIER_CONFIRMED=true; OpenRouter uses openrouter/free; Groq is skipped unless its free tier is explicitly confirmed.',
     limitStatus: { state: 'unavailable', providerQuotaNumbersKnown: false, retryTimeKnown: providerDiagnostics.some(item => item.retryTimeKnown), note: 'Only provider-supplied retry times and HTTP status categories are reported; provider quota limits are not guessed.' },
   }, 503, origin);
 }
@@ -252,7 +252,7 @@ export default {
       ok: true, system: 'JOKER 3', component: 'External PLUTON API',
       mode: 'mock-plus-free-provider-fallback', mockRouteProviderCalls: false,
       geminiRoute: '/v1/gemini/chat/completions', copilotRoute: '/v1/copilot/chat/completions',
-      geminiConfigured: Boolean(env && env.GEMINI_API_KEY), openrouterConfigured: Boolean(env && env.OPENROUTER_API_KEY),
+      geminiConfigured: Boolean(env && env.GEMINI_API_KEY), geminiFreeTierConfirmed: Boolean(env && env.GEMINI_FREE_TIER_CONFIRMED === 'true'), openrouterConfigured: Boolean(env && env.OPENROUTER_API_KEY),
       groqConfigured: Boolean(env && env.GROQ_API_KEY && env.GROQ_MODEL && env.GROQ_FREE_TIER_CONFIRMED === 'true'), geminiRateLimitConfigured: Boolean(env && env.GEMINI_RATE_LIMITER),
       capacity: { plannedBR: PLANNED_BR, activeWorkers: 0 },
       warning: '1,000 BR is a planned label, not deployed compute. CORS is not authentication; configure edge rate limits/auth before public use.',
@@ -264,7 +264,7 @@ export default {
         { id: GEMINI_MODEL, object: 'model', owned_by: 'google', route: '/v1/gemini/chat/completions' },
         { id: 'joker4-free-fallback', object: 'model', owned_by: 'zlatko-ai', route: '/v1/copilot/chat/completions', provider_order: ['google-gemini-api', 'openrouter/free', 'groq-free-tier'] },
       ],
-      note: 'Fallback order: Gemini, OpenRouter free router, then Groq only when free-tier use is explicitly confirmed. Provider keys remain server-side.',
+      note: 'Fallback order: Gemini only when GEMINI_FREE_TIER_CONFIRMED=true, OpenRouter free router, then Groq only when free-tier use is explicitly confirmed. The Gemini flag is owner confirmation, not an API-enforced billing lock. Provider keys remain server-side.',
       capacity: { plannedBR: PLANNED_BR, activeWorkers: 0 },
     }, 200, origin);
     if (url.pathname === '/v1/chat/completions' && request.method === 'POST') return mockChatCompletion(request, origin);
