@@ -49,3 +49,5 @@ export default {
     return json({ ok: false, error: 'Not found' }, 404);
   },
 };
+
+// Deployment trigger: root Worker configuration is managed by wrangler.toml.
