@@ -14,14 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Deploy dedicated Worker
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --config zlatko-gemini-free/wrangler.toml
+          workingDirectory: zlatko-gemini-free
+          command: deploy
       - name: Set Gemini API secret on the new Worker
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: zlatko-gemini-free
         run: |
           test -n "$GEMINI_API_KEY" || (echo "GEMINI_API_KEY GitHub secret is missing" && exit 1)
-          npx --yes wrangler@4 secret put GEMINI_API_KEY --config zlatko-gemini-free/wrangler.toml <<< "$GEMINI_API_KEY"
+          npx --yes wrangler@4 secret put GEMINI_API_KEY <<< "$GEMINI_API_KEY"
