@@ -378,19 +378,64 @@
         kontejner.innerHTML = tableHTML;
     });
 
-    async function pratiPoraka() {
-        const input = document.getElementById('chatInput');
-        const tekst = input.value.trim(); if(tekst === '') return;
-        const chatArea = document.getElementById('chatArea');
-        
-        chatArea.innerHTML += `<div class="msg user">${tekst}</div>`;
-        input.value = ''; chatArea.scrollTop = chatArea.scrollHeight;
-        
-        setTimeout(() => {
-            chatArea.innerHTML += `<div class="msg bot">Газда, ова е тест верзија. AI-от ќе биде поврзан кога ќе имаме вистинска серверска поддршка.</div>`;
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }, 1000);
+    const ZLATKO_GEMINI_ENDPOINT = 'https://zlatko-gemini-free.zlatkomarina0.workers.dev/v1/chat';
+    const zlatkoChatMessages = [];
+    let zlatkoChatBusy = false;
+
+    function addChatMessage(role, text) {
+      const chatArea = document.getElementById('chatArea');
+      const bubble = document.createElement('div');
+      bubble.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+      bubble.textContent = text;
+      chatArea.appendChild(bubble);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return bubble;
     }
+
+    async function pratiPoraka() {
+      const input = document.getElementById('chatInput');
+      const button = document.querySelector('.chat-input button');
+      const tekst = input.value.trim();
+      if (!tekst || zlatkoChatBusy) return;
+      zlatkoChatMessages.push({ role: 'user', content: tekst });
+      addChatMessage('user', tekst);
+      input.value = '';
+      zlatkoChatBusy = true;
+      if (button) button.disabled = true;
+      const waiting = addChatMessage('assistant', 'ZLATKO AI MODE обработува...');
+      try {
+        const response = await fetch(ZLATKO_GEMINI_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: zlatkoChatMessages.slice(-12) })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok !== true || typeof data.text !== 'string') {
+          waiting.textContent = data.error || (response.status === 429
+            ? 'Достигнат е бесплатниот лимит. Обиди се подоцна.'
+            : 'AI услугата моментално не е достапна.');
+          waiting.dataset.error = 'true';
+          return;
+        }
+        waiting.textContent = data.text;
+        zlatkoChatMessages.push({ role: 'assistant', content: data.text });
+        while (zlatkoChatMessages.length > 12) zlatkoChatMessages.shift();
+      } catch (_) {
+        waiting.textContent = 'Не можам да се поврзам со ZLATKO Gemini Free. Провери интернет или пробај повторно.';
+        waiting.dataset.error = 'true';
+      } finally {
+        zlatkoChatBusy = false;
+        if (button) button.disabled = false;
+        input.focus();
+      }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        pratiPoraka();
+      }
+    });
   </script>
   <script type="module" src="./src/pluton-ui.ts"></script>
 </body>
