@@ -1,18 +1,20 @@
 name: Deploy Cloudflare Worker
+
 on:
-  # Manual only until the Cloudflare API token is repaired in repository secrets.
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'worker.js'
+      - 'wrangler.toml'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: 'cloudflare-worker'
-          command: deploy worker.js --name zlatko-api --compatibility-date 2024-01-01
