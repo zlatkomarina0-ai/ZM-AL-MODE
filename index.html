@@ -133,31 +133,31 @@
     <div id="tab-social" class="tab-content">
       <div class="folder-title">📱 Социјални мрежи</div>
       <div class="app-grid" style="margin-bottom: 20px;">
-        <div class="app-item" onclick="window.open('https://m.facebook.com', '_blank')"><div class="app-icon bg-fb">📘</div><div class="app-name">Facebook</div></div>
-        <div class="app-item" onclick="window.open('https://www.instagram.com', '_blank')"><div class="app-icon bg-ig">📸</div><div class="app-name">Instagram</div></div>
-        <div class="app-item" onclick="window.open('https://viber.com', '_blank')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
-        <div class="app-item" onclick="window.open('https://wa.me', '_blank')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
+        <div class="app-item" onclick="launchNativeApp('fb://facewebmodal/f?href=https://m.facebook.com', 'Facebook')"><div class="app-icon bg-fb">📘</div><div class="app-name">Facebook</div></div>
+        <div class="app-item" onclick="launchNativeApp('instagram://app', 'Instagram')"><div class="app-icon bg-ig">📸</div><div class="app-name">Instagram</div></div>
+        <div class="app-item" onclick="launchNativeApp('viber://more', 'Viber')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
+        <div class="app-item" onclick="launchNativeApp('whatsapp://send', 'WhatsApp')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
       </div>
 
       <div class="folder-title">⚽ Спорт и Забава</div>
       <div class="app-grid" style="margin-bottom: 20px;">
-        <div class="app-item" onclick="window.open('https://sportlife.com.mk', '_blank')"><div class="app-icon bg-sl">🏃</div><div class="app-name">Sport Life</div></div>
-        <div class="app-item" onclick="window.open('https://m.youtube.com', '_blank')"><div class="app-icon bg-yt">▶️</div><div class="app-name">YouTube</div></div>
+        <div class="app-item" onclick="launchNativeApp('intent://launch/#Intent;package=com.sportlife;end', 'Sport Life')"><div class="app-icon bg-sl">🏃</div><div class="app-name">Sport Life</div></div>
+        <div class="app-item" onclick="launchNativeApp('vnd.youtube://', 'YouTube')"><div class="app-icon bg-yt">▶️</div><div class="app-name">YouTube</div></div>
       </div>
 
       <div class="folder-title">🏦 Финансии и Документи</div>
       <div class="app-grid" style="margin-bottom: 20px;">
-        <div class="app-item" onclick="otvoriAplikacija('https://www.stb.com.mk/')"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB Банка</div></div>
-        <div class="app-item" onclick="window.open('https://myddv.ujp.gov.mk/', '_blank')"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
-        <div class="app-item" onclick="window.open('https://drive.google.com', '_blank')"><div class="app-icon bg-drive">📁</div><div class="app-name">Мои датотеки</div></div>
-        <div class="app-item" onclick="window.open('https://calendar.google.com', '_blank')"><div class="app-icon bg-cal">📅</div><div class="app-name">Календар</div></div>
-        <div class="app-item" onclick="window.open('https://mail.google.com', '_blank')"><div class="app-icon bg-gmail">✉️</div><div class="app-name">Gmail</div></div>
+        <div class="app-item" onclick="launchNativeApp('intent://launch/#Intent;package=mk.stb.mobile;end', 'STB Банка')"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB Банка</div></div>
+        <div class="app-item" onclick="launchNativeApp('intent://launch/#Intent;package=mk.gov.ujp.mojddv;end', 'Мој ДДВ')"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
+        <div class="app-item" onclick="launchNativeApp('googledrive://', 'Мои датотеки')"><div class="app-icon bg-drive">📁</div><div class="app-name">Мои датотеки</div></div>
+        <div class="app-item" onclick="launchNativeApp('googlecalendar://', 'Календар')"><div class="app-icon bg-cal">📅</div><div class="app-name">Календар</div></div>
+        <div class="app-item" onclick="launchNativeApp('googlegmail://', 'Gmail')"><div class="app-icon bg-gmail">✉️</div><div class="app-name">Gmail</div></div>
       </div>
 
       <div class="folder-title">🛠️ Алатки и Систем</div>
       <div class="app-grid">
-        <div class="app-item" onclick="window.open('https://google.com', '_blank')"><div class="app-icon bg-chrome">🌐</div><div class="app-name">Chrome</div></div>
-        <div class="app-item" onclick="window.open('https://translate.google.com', '_blank')"><div class="app-icon bg-trans">🔤</div><div class="app-name">Преведувач</div></div>
+        <div class="app-item" onclick="launchNativeApp('googlechrome://navigate?url=https://google.com', 'Chrome')"><div class="app-icon bg-chrome">🌐</div><div class="app-name">Chrome</div></div>
+        <div class="app-item" onclick="launchNativeApp('googletranslate://', 'Преведувач')"><div class="app-icon bg-trans">🔤</div><div class="app-name">Преведувач</div></div>
       </div>
     </div>
 
@@ -249,15 +249,14 @@
         }
     }
 
-    function otvoriAplikacija(url) {
-        if (url.includes('stb.com.mk')) {
-            let vnesenKod = prompt("🔒 ВНЕСИ ГО ТАЈНИОТ КОД ЗА БАНКА:");
-            if (vnesenKod !== "21031983") {
-                alert("⛔ ПОГРЕШЕН КОД! ПРИСТАПОТ Е БЛОКИРАН.");
-                return;
+    function launchNativeApp(appUrl, appName) {
+        // Обид за отворање на инсталираната апликација; не отвора веб-страница.
+        window.location.href = appUrl;
+        window.setTimeout(function () {
+            if (document.visibilityState === 'visible') {
+                alert('Ако ' + appName + ' не се отвори, провери дали апликацијата е инсталирана на телефонот.');
             }
-        }
-        window.open(url, '_blank');
+        }, 1200);
     }
 
     function parsirajSportLife(tekst) {
