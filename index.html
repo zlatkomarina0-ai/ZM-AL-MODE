@@ -62,6 +62,8 @@
     .app-item[hidden] { display:none !important; }
     #appSearchEmpty { padding:18px 10px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
     .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .app-item:focus-visible { outline:2px solid var(--primary); outline-offset:4px; border-radius:10px; }
+    .app-item:active .app-icon { transform:scale(.96); }
     .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
     .bg-fb { background: #1877F2; } .bg-ig { background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%); } .bg-viber { background: #7360F2; } .bg-wa { background: #25D366; } .bg-sl { background: #0056b3; } .bg-stb { background: #d32f2f; } .bg-ddv { background: #00897b; } .bg-yt { background: #FF0000; } .bg-gmail { background: #fff; color: #d93025; } .bg-chrome { background: #fff; } .bg-gal { background: #ff9800; } .bg-drive { background: #4285F4; } .bg-trans { background: #475569; } .bg-block { background: #ef4444; } .bg-web { background: #0ea5e9; } .bg-plus { background: #10b981; } .bg-dict { background: #8b5cf6; } .bg-msg { background: #3b82f6; } .bg-store { background: #34a853; } .bg-cal { background: #ec4899; } .bg-auth { background: #f97316; } .bg-aide { background: #0ea5e9; } .bg-term { background: #111; } .bg-git { background: #24292e; } .bg-clock { background: #64748b; }
@@ -278,6 +280,20 @@
     }
 
     const appSearch = document.getElementById('appSearch');
+    const phoneAppTiles = document.querySelectorAll('#phoneAppGrid .app-item');
+    phoneAppTiles.forEach(tile => {
+      tile.setAttribute('role', 'button');
+      tile.setAttribute('tabindex', '0');
+      const appName = tile.querySelector('.app-name')?.textContent?.trim();
+      if (appName) tile.setAttribute('aria-label', 'Отвори ' + appName);
+      tile.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          tile.click();
+        }
+      });
+    });
+
     const appSearchStatus = document.getElementById('appSearchStatus');
     const appSearchEmpty = document.getElementById('appSearchEmpty');
     const phoneAppGrid = document.getElementById('phoneAppGrid');
