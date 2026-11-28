@@ -55,6 +55,11 @@
 
     .folder-title { font-size: 13px; color: var(--primary); margin: 15px 0 10px 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; }
+    .app-search-label { display:block; margin:0 0 7px 2px; color:var(--primary); font-size:11px; font-weight:800; letter-spacing:.08em; }
+    .app-search { display:block; width:100%; min-height:44px; margin:0 0 7px; padding:0 13px; border:1px solid var(--border); border-radius:11px; outline:none; background:var(--bg-surface); color:var(--text-main); font-size:15px; }
+    .app-search:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(212,175,55,.15); }
+    .app-search-status { margin:0 0 14px; color:var(--text-muted); font-size:11px; }
+    .app-item[hidden] { display:none !important; }
     .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
     .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
@@ -136,7 +141,10 @@
 
     <div id="tab-social" class="tab-content">
       <div class="folder-title">📱 Апликации на телефонот · 22</div>
-      <div class="app-grid">
+      <label class="app-search-label" for="appSearch">ПРЕБАРАЈ АПЛИКАЦИИ</label>
+      <input id="appSearch" class="app-search" type="search" placeholder="Име на апликација..." autocomplete="off" aria-label="Пребарај апликации на телефонот">
+      <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите 22 апликации.</p>
+      <div class="app-grid" id="phoneAppGrid">
         <div class="app-item" onclick="launchNativeApp('com.viber.voip', 'Viber', 'viber://more')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
         <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
         <div class="app-item" onclick="launchNativeApp('mk.gov.ujp.mojddv', 'Мој ДДВ')"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
@@ -265,6 +273,26 @@
             f1Container.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
             rmContainer.innerHTML = '<p style="padding:15px; color:var(--danger); text-align:center;">Грешка.</p>';
         }
+    }
+
+    const appSearch = document.getElementById('appSearch');
+    const appSearchStatus = document.getElementById('appSearchStatus');
+    const phoneAppGrid = document.getElementById('phoneAppGrid');
+    if (appSearch && phoneAppGrid) {
+      appSearch.addEventListener('input', () => {
+        const query = appSearch.value.trim().toLocaleLowerCase('mk');
+        const apps = Array.from(phoneAppGrid.querySelectorAll('.app-item'));
+        let visible = 0;
+        apps.forEach(app => {
+          const name = (app.querySelector('.app-name')?.textContent || '').toLocaleLowerCase('mk');
+          const matches = name.includes(query);
+          app.hidden = !matches;
+          if (matches) visible++;
+        });
+        appSearchStatus.textContent = query
+          ? 'Пронајдени: ' + visible + ' од ' + apps.length + ' апликации.'
+          : 'Прикажани се сите ' + apps.length + ' апликации.';
+      });
     }
 
     function launchNativeApp(packageName, appName, deepLink) {
