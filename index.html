@@ -55,9 +55,19 @@
 
     .folder-title { font-size: 13px; color: var(--primary); margin: 15px 0 10px 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; }
-    .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .app-search-label { display:block; margin:0 0 7px 2px; color:var(--primary); font-size:11px; font-weight:800; letter-spacing:.08em; }
+    .app-search { display:block; width:100%; min-height:44px; margin:0 0 7px; padding:0 13px; border:1px solid var(--border); border-radius:11px; outline:none; background:var(--bg-surface); color:var(--text-main); font-size:15px; }
+    .app-search:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(212,175,55,.15); }
+    .app-search-status { margin:0 0 14px; color:var(--text-muted); font-size:11px; }
+    .app-launch-status { margin:0 0 12px; padding:9px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text-muted); font-size:12px; line-height:1.4; }
+    .app-launch-status:empty { display:none; }
+    .app-item[hidden] { display:none !important; }
+    #appSearchEmpty { padding:18px 10px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
+    .app-item { display: flex; flex-direction: column; align-items: center; justify-content:flex-start; min-width:0; min-height:84px; padding:3px 2px 5px; cursor: pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+    .app-item:focus-visible { outline:2px solid var(--primary); outline-offset:4px; border-radius:10px; }
+    .app-item:active .app-icon { transform:scale(.96); }
     .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); width: 100%; min-height: 24px; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
     .bg-fb { background: #1877F2; } .bg-ig { background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%); } .bg-viber { background: #7360F2; } .bg-wa { background: #25D366; } .bg-sl { background: #0056b3; } .bg-stb { background: #d32f2f; } .bg-ddv { background: #00897b; } .bg-yt { background: #FF0000; } .bg-gmail { background: #fff; color: #d93025; } .bg-chrome { background: #fff; } .bg-gal { background: #ff9800; } .bg-drive { background: #4285F4; } .bg-trans { background: #475569; } .bg-block { background: #ef4444; } .bg-web { background: #0ea5e9; } .bg-plus { background: #10b981; } .bg-dict { background: #8b5cf6; } .bg-msg { background: #3b82f6; } .bg-store { background: #34a853; } .bg-cal { background: #ec4899; } .bg-auth { background: #f97316; } .bg-aide { background: #0ea5e9; } .bg-term { background: #111; } .bg-git { background: #24292e; } .bg-clock { background: #64748b; }
 
     .chat-container { display: flex; flex-direction: column; height: calc(100vh - 190px); height: calc(100dvh - 190px); min-height: 320px; max-height: 760px; }
@@ -136,9 +146,14 @@
 
     <div id="tab-social" class="tab-content">
       <div class="folder-title">📱 Апликации на телефонот · 22</div>
-      <div class="app-grid">
+      <label class="app-search-label" for="appSearch">ПРЕБАРАЈ АПЛИКАЦИИ</label>
+      <input id="appSearch" class="app-search" type="search" placeholder="Име на апликација..." autocomplete="off" aria-label="Пребарај апликации на телефонот">
+      <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите апликации.</p>
+      <p id="appSearchEmpty" class="app-search-status" hidden>Нема апликации со тоа име.</p>
+                <p id="appLaunchStatus" class="app-launch-status" role="status" aria-live="polite"></p>
+      <div class="app-grid" id="phoneAppGrid">
         <div class="app-item" onclick="launchNativeApp('com.viber.voip', 'Viber', 'viber://more')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
-        <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
+        <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">💬</div><div class="app-name">WhatsApp</div></div>
         <div class="app-item" onclick="launchNativeApp('mk.gov.ujp.mojddv', 'Мој ДДВ')"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
         <div class="app-item" onclick="launchNativeApp('mk.stb.mobile', 'STB')"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB</div></div>
         <div class="app-item" onclick="launchNativeApp('com.instagram.lite', 'Instagram Lite', 'instagram://app')"><div class="app-icon bg-ig">📸</div><div class="app-name">Instagram Lite</div></div>
@@ -267,10 +282,48 @@
         }
     }
 
+    const appSearch = document.getElementById('appSearch');
+    const phoneAppTiles = document.querySelectorAll('#phoneAppGrid .app-item');
+    phoneAppTiles.forEach(tile => {
+      tile.setAttribute('role', 'button');
+      tile.setAttribute('tabindex', '0');
+      const appName = tile.querySelector('.app-name')?.textContent?.trim();
+      if (appName) tile.setAttribute('aria-label', 'Отвори ' + appName);
+      tile.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          tile.click();
+        }
+      });
+    });
+
+    const appSearchStatus = document.getElementById('appSearchStatus');
+    const appSearchEmpty = document.getElementById('appSearchEmpty');
+    const phoneAppGrid = document.getElementById('phoneAppGrid');
+    if (appSearch && phoneAppGrid) {
+      const initialAppCount = phoneAppGrid.querySelectorAll('.app-item').length;
+      appSearchStatus.textContent = 'Прикажани се сите ' + initialAppCount + ' апликации.';
+      appSearch.addEventListener('input', () => {
+        const query = appSearch.value.trim().toLocaleLowerCase('mk');
+        const apps = Array.from(phoneAppGrid.querySelectorAll('.app-item'));
+        let visible = 0;
+        apps.forEach(app => {
+          const name = (app.querySelector('.app-name')?.textContent || '').toLocaleLowerCase('mk');
+          const matches = name.includes(query);
+          app.hidden = !matches;
+          if (matches) visible++;
+        });
+        appSearchStatus.textContent = query
+          ? 'Пронајдени: ' + visible + ' од ' + apps.length + ' апликации.'
+          : 'Прикажани се сите ' + apps.length + ' апликации.';
+        if (appSearchEmpty) appSearchEmpty.hidden = visible !== 0;
+      });
+    }
+
     function launchNativeApp(packageName, appName, deepLink) {
         // Обид прво преку длабок линк (ако е поддржан), потоа директно преку Android package intent.
         // Не се користи веб-страница како замена.
-        const launchIntent = 'intent://launch/#Intent;package=' + encodeURIComponent(packageName) + ';end';
+        const launchIntent = 'intent://launch/#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + encodeURIComponent(packageName) + ';end';
         if (deepLink) {
             const before = document.visibilityState;
             window.location.href = deepLink;
@@ -282,11 +335,10 @@
         } else {
             window.location.href = launchIntent;
         }
-        window.setTimeout(function () {
-            if (document.visibilityState === 'visible') {
-                alert('Не се потврди отворање на ' + appName + '. Провери дали е инсталирана и дали пакетот е точен на телефонот.');
-            }
-        }, 1800);
+        const launchStatus = document.getElementById('appLaunchStatus');
+        if (launchStatus) {
+            launchStatus.textContent = 'Се обидувам да ја отворам апликацијата: ' + appName + '. Ако не се отвори, провери дали е инсталирана и дали линкот е поддржан.';
+        }
     }
 
     function parsirajSportLife(tekst) {

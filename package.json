@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test:pluton": "node --experimental-strip-types --test scripts/pluton-scheduled.test.mjs scripts/pikova-dama.test.mjs scripts/dama-tref.test.mjs scripts/dama-tref-boundary.test.mjs scripts/joker3-mock-api.test.mjs scripts/joker2-coefficients.test.mjs",
+    "test:app-shell": "node --test scripts/app-shell.test.mjs",
     "pluton:scheduled": "node scripts/pluton-scheduled.mjs"
   },
   "devDependencies": {
