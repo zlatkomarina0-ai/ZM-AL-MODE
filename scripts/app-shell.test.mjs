@@ -18,6 +18,15 @@ test('phone app shell contains 22 app tiles with unique visible names', () => {
   assert.equal(new Set(names).size, names.length, 'visible app names should be unique');
 });
 
+test('each phone app tile has a distinct Android package identifier', () => {
+  assert.ok(grid, 'phone app grid should exist');
+  const packages = [...grid.matchAll(/onclick="launchNativeApp\('([^']+)'/g)].map(([, packageName]) => packageName);
+  assert.equal(packages.length, 22, 'every tile should declare an Android package identifier');
+  assert.ok(packages.every(name => /^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+$/.test(name)),
+    'package identifiers should use Android reverse-domain syntax');
+  assert.equal(new Set(packages).size, packages.length, 'Android package identifiers should be unique');
+});
+
 test('phone app tiles expose keyboard activation and accessible names', () => {
   assert.match(html, /tile\.setAttribute\('role', 'button'\)/);
   assert.match(html, /tile\.setAttribute\('tabindex', '0'\)/);
