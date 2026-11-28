@@ -61,7 +61,7 @@
     .app-search-status { margin:0 0 14px; color:var(--text-muted); font-size:11px; }
     .app-item[hidden] { display:none !important; }
     #appSearchEmpty { padding:18px 10px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
-    .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .app-item { display: flex; flex-direction: column; align-items: center; justify-content:flex-start; min-width:0; min-height:78px; padding:3px 2px 5px; cursor: pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
     .app-item:focus-visible { outline:2px solid var(--primary); outline-offset:4px; border-radius:10px; }
     .app-item:active .app-icon { transform:scale(.96); }
     .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -146,7 +146,7 @@
       <div class="folder-title">📱 Апликации на телефонот · 22</div>
       <label class="app-search-label" for="appSearch">ПРЕБАРАЈ АПЛИКАЦИИ</label>
       <input id="appSearch" class="app-search" type="search" placeholder="Име на апликација..." autocomplete="off" aria-label="Пребарај апликации на телефонот">
-      <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите 22 апликации.</p>
+      <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите апликации.</p>
       <p id="appSearchEmpty" class="app-search-status" hidden>Нема апликации со тоа име.</p>
       <div class="app-grid" id="phoneAppGrid">
         <div class="app-item" onclick="launchNativeApp('com.viber.voip', 'Viber', 'viber://more')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
@@ -298,6 +298,8 @@
     const appSearchEmpty = document.getElementById('appSearchEmpty');
     const phoneAppGrid = document.getElementById('phoneAppGrid');
     if (appSearch && phoneAppGrid) {
+      const initialAppCount = phoneAppGrid.querySelectorAll('.app-item').length;
+      appSearchStatus.textContent = 'Прикажани се сите ' + initialAppCount + ' апликации.';
       appSearch.addEventListener('input', () => {
         const query = appSearch.value.trim().toLocaleLowerCase('mk');
         const apps = Array.from(phoneAppGrid.querySelectorAll('.app-item'));
