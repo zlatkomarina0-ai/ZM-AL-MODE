@@ -60,6 +60,7 @@
     .app-search:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(212,175,55,.15); }
     .app-search-status { margin:0 0 14px; color:var(--text-muted); font-size:11px; }
     .app-item[hidden] { display:none !important; }
+    #appSearchEmpty { padding:18px 10px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
     .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
     .app-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .app-name { font-size: 10px; font-weight: 500; text-align: center; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
@@ -144,6 +145,7 @@
       <label class="app-search-label" for="appSearch">ПРЕБАРАЈ АПЛИКАЦИИ</label>
       <input id="appSearch" class="app-search" type="search" placeholder="Име на апликација..." autocomplete="off" aria-label="Пребарај апликации на телефонот">
       <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите 22 апликации.</p>
+      <p id="appSearchEmpty" class="app-search-status" hidden>Нема апликации со тоа име.</p>
       <div class="app-grid" id="phoneAppGrid">
         <div class="app-item" onclick="launchNativeApp('com.viber.voip', 'Viber', 'viber://more')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
         <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
@@ -277,6 +279,7 @@
 
     const appSearch = document.getElementById('appSearch');
     const appSearchStatus = document.getElementById('appSearchStatus');
+    const appSearchEmpty = document.getElementById('appSearchEmpty');
     const phoneAppGrid = document.getElementById('phoneAppGrid');
     if (appSearch && phoneAppGrid) {
       appSearch.addEventListener('input', () => {
@@ -292,6 +295,7 @@
         appSearchStatus.textContent = query
           ? 'Пронајдени: ' + visible + ' од ' + apps.length + ' апликации.'
           : 'Прикажани се сите ' + apps.length + ' апликации.';
+        if (appSearchEmpty) appSearchEmpty.hidden = visible !== 0;
       });
     }
 
