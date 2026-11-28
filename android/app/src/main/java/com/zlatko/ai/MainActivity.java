@@ -26,6 +26,11 @@ public class MainActivity extends BridgeActivity {
                     Uri url = request.getUrl();
                     String urlString = url.toString();
 
+                    if ("zlatkosports".equals(url.getScheme())) {
+                        startActivity(new Intent(MainActivity.this, SportsBrowserActivity.class));
+                        return true;
+                    }
+
                     if ("zlatkobrowser".equals(url.getScheme())) {
                         startActivity(new Intent(MainActivity.this, BrowserActivity.class));
                         return true;
