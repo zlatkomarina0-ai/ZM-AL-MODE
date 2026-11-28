@@ -98,13 +98,15 @@ public class BrowserActivity extends Activity {
           + "<div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px'>"
           + card("✦", "ZLATKO AI MODE", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/")
           + card("◈", "Copilot", "https://copilot.microsoft.com/")
-          + card("📰", "Вести", "https://www.google.com/search?q=latest+news")
-          + card("🏎", "F1 вести", "https://www.google.com/search?q=Formula+1+latest+news")
-          + card("⚽", "Real Madrid вести", "https://www.google.com/search?q=Real+Madrid+latest+news")
-          + card("📅", "F1 календар", "https://www.formula1.com/en/racing/2026.html")
-          + card("⚽", "Real Madrid распоред", "https://www.realmadrid.com/en-US/football/first-team/fixtures")
+          + card("⚽", "Real Madrid — Вести", "https://www.rezultati.com/tim/real-madrid/W8mj7MDD/vijesti/")
+          + card("⚽", "Real Madrid — Резултати", "https://www.rezultati.com/tim/real-madrid/W8mj7MDD/rezultati/")
+          + card("📅", "Real Madrid — Распоред", "https://www.rezultati.com/tim/real-madrid/W8mj7MDD/raspored/")
+          + card("🏆", "Real Madrid — Табела", "https://www.rezultati.com/tim/real-madrid/W8mj7MDD/tablica/dWdJXP6U/tablica/ukupno/")
+          + card("🏎", "F1 — Вести", "https://www.formula1.com/en/latest")
+          + card("🏁", "F1 — Резултати", "https://www.formula1.com/en/results/2026/drivers")
+          + card("📅", "F1 — Календар", "https://www.formula1.com/en/racing/2026")
           + card("◆", "Спортски проект", "https://github.com/zlatkomarina0-ai/ZM-AL-MODE")
-          + "</div><p style='font-size:12px;color:#9aabc0;text-align:center;margin-top:20px'>Внеси пребарување или веб-адреса во горното поле.</p>"
+          + "</div><p style='font-size:12px;color:#9aabc0;text-align:center;margin-top:20px'>Пребарај или внеси веб-адреса во горното поле.</p>"
           + "</body></html>";
         web.loadDataWithBaseURL("https://browser.local/", html, "text/html", "UTF-8", null);
         address.setText("");
