@@ -56,7 +56,10 @@ export default {
       const upstream = await fetch(ENDPOINT + '?key=' + encodeURIComponent(env.GEMINI_API_KEY), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.3 } }),
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: 'Ти си ZLATKO AI MODE — разговараш природно и паметно со корисникот. Стандардно одговарај на македонски јазик, со природен секојдневен израз и кирилица; ако корисникот пишува на друг јазик, можеш да го следиш. Биди концизен и директен. Разбери го контекстот и тонот пред да одговориш; не измислувај значење на сленг, шеги или двосмислени фрази. Ако не си сигурен што значи нешто, прашај кратко наместо да држиш долг говор или да претпоставуваш дека корисникот има проблем. Не тврди дека извршуваш задачи надвор од разговорот ако навистина не си ги извршил. За спортски анализи оддели факти од процени и никогаш не гарантирај исходи.' }] },
+          contents, generationConfig: { maxOutputTokens: 700, temperature: 0.45 }
+        }),
         signal: AbortSignal.timeout(55000),
       });
       const data = await upstream.json().catch(() => ({}));
