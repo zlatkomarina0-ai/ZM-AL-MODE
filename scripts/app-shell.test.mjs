@@ -52,3 +52,18 @@ test('app launch status does not falsely claim that Android confirmed launch', (
   assert.match(html, /Се обидувам да ја отворам апликацијата:/);
   assert.doesNotMatch(html, /Не се потврди отворање/);
 });
+
+
+test('each app tile passes a valid launch name and optional URI scheme', () => {
+  assert.ok(grid, 'phone app grid should exist');
+  const calls = [...grid.matchAll(/onclick="launchNativeApp\('([^']+)',\s*'([^']+)'(?:,\s*'([^']+)')?\)"/g)];
+  assert.equal(calls.length, 22, 'each app tile should have a parseable launch handler');
+  for (const [, packageName, appName, deepLink] of calls) {
+    assert.match(packageName, /^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/);
+    assert.ok(appName.trim(), 'launch handler should include an app name');
+    if (deepLink) {
+      assert.match(deepLink, /^[A-Za-z][A-Za-z0-9+.-]*:/, 'deep link should declare a URI scheme');
+      assert.doesNotMatch(deepLink, /\s/, 'deep link should not contain whitespace');
+    }
+  }
+});
