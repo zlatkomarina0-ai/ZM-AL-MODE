@@ -22,7 +22,7 @@ test('each phone app tile has a distinct Android package identifier', () => {
   assert.ok(grid, 'phone app grid should exist');
   const packages = [...grid.matchAll(/onclick="launchNativeApp\('([^']+)'/g)].map(([, packageName]) => packageName);
   assert.equal(packages.length, 22, 'every tile should declare an Android package identifier');
-  assert.ok(packages.every(name => /^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+$/.test(name)),
+  assert.ok(packages.every(name => /^[A-Za-z][A-Za-z0-9_]*(?:[.][A-Za-z][A-Za-z0-9_]*)+$/.test(name)),
     'package identifiers should use Android reverse-domain syntax');
   assert.equal(new Set(packages).size, packages.length, 'Android package identifiers should be unique');
 });
