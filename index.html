@@ -323,7 +323,7 @@
     function launchNativeApp(packageName, appName, deepLink) {
         // Обид прво преку длабок линк (ако е поддржан), потоа директно преку Android package intent.
         // Не се користи веб-страница како замена.
-        const launchIntent = 'intent://launch/#Intent;package=' + encodeURIComponent(packageName) + ';end';
+        const launchIntent = 'intent://launch/#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + encodeURIComponent(packageName) + ';end';
         if (deepLink) {
             const before = document.visibilityState;
             window.location.href = deepLink;
