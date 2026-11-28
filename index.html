@@ -59,6 +59,8 @@
     .app-search { display:block; width:100%; min-height:44px; margin:0 0 7px; padding:0 13px; border:1px solid var(--border); border-radius:11px; outline:none; background:var(--bg-surface); color:var(--text-main); font-size:15px; }
     .app-search:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(212,175,55,.15); }
     .app-search-status { margin:0 0 14px; color:var(--text-muted); font-size:11px; }
+    .app-launch-status { margin:0 0 12px; padding:9px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text-muted); font-size:12px; line-height:1.4; }
+    .app-launch-status:empty { display:none; }
     .app-item[hidden] { display:none !important; }
     #appSearchEmpty { padding:18px 10px; text-align:center; border:1px dashed var(--border); border-radius:10px; }
     .app-item { display: flex; flex-direction: column; align-items: center; justify-content:flex-start; min-width:0; min-height:78px; padding:3px 2px 5px; cursor: pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
@@ -148,9 +150,10 @@
       <input id="appSearch" class="app-search" type="search" placeholder="Име на апликација..." autocomplete="off" aria-label="Пребарај апликации на телефонот">
       <p id="appSearchStatus" class="app-search-status" aria-live="polite">Прикажани се сите апликации.</p>
       <p id="appSearchEmpty" class="app-search-status" hidden>Нема апликации со тоа име.</p>
+                <p id="appLaunchStatus" class="app-launch-status" role="status" aria-live="polite"></p>
       <div class="app-grid" id="phoneAppGrid">
         <div class="app-item" onclick="launchNativeApp('com.viber.voip', 'Viber', 'viber://more')"><div class="app-icon bg-viber">💬</div><div class="app-name">Viber</div></div>
-        <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">📞</div><div class="app-name">WhatsApp</div></div>
+        <div class="app-item" onclick="launchNativeApp('com.whatsapp', 'WhatsApp', 'whatsapp://send')"><div class="app-icon bg-wa">💬</div><div class="app-name">WhatsApp</div></div>
         <div class="app-item" onclick="launchNativeApp('mk.gov.ujp.mojddv', 'Мој ДДВ')"><div class="app-icon bg-ddv">🧾</div><div class="app-name">Мој ДДВ</div></div>
         <div class="app-item" onclick="launchNativeApp('mk.stb.mobile', 'STB')"><div class="app-icon bg-stb">🏦</div><div class="app-name">STB</div></div>
         <div class="app-item" onclick="launchNativeApp('com.instagram.lite', 'Instagram Lite', 'instagram://app')"><div class="app-icon bg-ig">📸</div><div class="app-name">Instagram Lite</div></div>
@@ -332,11 +335,10 @@
         } else {
             window.location.href = launchIntent;
         }
-        window.setTimeout(function () {
-            if (document.visibilityState === 'visible') {
-                alert('Не се потврди отворање на ' + appName + '. Провери дали е инсталирана и дали пакетот е точен на телефонот.');
-            }
-        }, 1800);
+        const launchStatus = document.getElementById('appLaunchStatus');
+        if (launchStatus) {
+            launchStatus.textContent = 'Се обидувам да ја отворам апликацијата: ' + appName + '. Ако не се отвори, провери дали е инсталирана и дали линкот е поддржан.';
+        }
     }
 
     function parsirajSportLife(tekst) {
