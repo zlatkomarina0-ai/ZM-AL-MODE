@@ -42,6 +42,12 @@ test('app search reports visible results and a no-results state', () => {
   assert.match(html, /appSearchEmpty\.hidden = visible !== 0/);
 });
 
+test('app fallback intent requests Android launcher activity', () => {
+  assert.match(html, /action=android\\.intent\\.action\\.MAIN/);
+  assert.match(html, /category=android\\.intent\\.category\\.LAUNCHER/);
+  assert.match(html, /package=' \\+ encodeURIComponent\\(packageName\\)/);
+});
+
 test('app launch status does not falsely claim that Android confirmed launch', () => {
   assert.match(html, /Се обидувам да ја отворам апликацијата:/);
   assert.doesNotMatch(html, /Не се потврди отворање/);
