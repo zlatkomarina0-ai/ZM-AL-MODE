@@ -2,7 +2,7 @@ name: PLUTON build check
 
 on:
   push:
-    branches: [main, feature/pluton-local-engine]
+    branches: [main, feature/pluton-local-engine, feature/app-shell-polish]
   pull_request:
     branches: [main]
   workflow_dispatch:
