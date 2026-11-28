@@ -184,12 +184,29 @@
   </div>
 
   <script>
-    function switchTab(tabName, navElement) {
+    function switchTab(tabName, navElement, updateHash = true) {
+      const target = document.getElementById('tab-' + tabName);
+      if (!target) return;
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-      document.getElementById('tab-' + tabName).classList.add('active');
-      navElement.classList.add('active');
+      target.classList.add('active');
+      const activeNav = navElement || document.querySelector('.nav-item[onclick*="switchTab(\'' + tabName + '\'"]');
+      if (activeNav) activeNav.classList.add('active');
+      if (updateHash && window.location.hash !== '#tab-' + tabName) {
+        history.replaceState(null, '', '#tab-' + tabName);
+      }
     }
+
+    function openTabFromHash() {
+      const tabName = window.location.hash.replace(/^#tab-/, '');
+      if (['types', 'news', 'social', 'ai'].includes(tabName)) {
+        const nav = Array.from(document.querySelectorAll('.nav-item'))
+          .find(item => item.getAttribute('onclick')?.includes("switchTab('" + tabName + "'"));
+        switchTab(tabName, nav, false);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', openTabFromHash);
+    window.addEventListener('hashchange', openTabFromHash);
 
     let vnesenPin = ""; 
     const TAEN_KOD = "0000";
