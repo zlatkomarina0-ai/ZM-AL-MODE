@@ -93,15 +93,9 @@ public class SportsBrowserActivity extends Activity {
     private void showHome() {
         String html = "<!doctype html><html lang='mk'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='margin:0;padding:18px;background:#07152f;color:#f7f8fc;font:15px system-ui'>" +
           "<div style='color:#d4af37;font-size:11px;font-weight:900;letter-spacing:2px'>ZM · SPORTS WORKSPACE</div>" +
-          "<h2 style='font-size:28px;margin:8px 0'>Спортски проект</h2><p style='color:#a6b6cd;line-height:1.6'>Одделен простор за спортскиот билтен, ZLATKO AI MODE, Формула 1 и Реал Мадрид.</p>" +
-          card("ZLATKO AI MODE · спортски проект", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/sports.html") +
-          card("Спортски билтен / главна апликација", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/") +
-          card("F1 вести · официјален извор", "https://www.formula1.com/en/latest/all.html") +
-          card("F1 календар", "https://www.formula1.com/en/racing/2026.html") +
-          card("Реал Мадрид · официјални вести", "https://www.realmadrid.com/en-US/news") +
-          card("Реал Мадрид · натпревари", "https://www.realmadrid.com/en-US/football/first-team/fixtures") +
-          card("Пребарај спортски вести", "https://www.google.com/search?q=" + Uri.encode("спортски вести")) +
-          "<p style='font-size:12px;color:#a6b6cd;margin-top:20px'>Овој прелистувач е одделен од општиот Browser. Внеси адреса или пребарување во лентата погоре.</p></body></html>";
+          "<h2 style='font-size:28px;margin:8px 0'>Спортски билтен и типување</h2><p style='color:#a6b6cd;line-height:1.6'>Посебен простор само за ZLATKO AI MODE / PLUTON CODE и обработка на спортски билтен.</p>" +
+          card("Отвори ZLATKO AI MODE · PLUTON CODE", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/") +
+          "<p style='font-size:12px;color:#a6b6cd;margin-top:20px'>Овој прелистувач е одделен од општиот Browser. Внеси спортска адреса или пребарување во лентата погоре.</p></body></html>";
         webView.loadDataWithBaseURL("https://sports-browser.local/", html, "text/html", "UTF-8", null);
         address.setText("");
     }
