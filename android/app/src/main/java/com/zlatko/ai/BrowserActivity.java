@@ -91,18 +91,27 @@ public class BrowserActivity extends Activity {
     }
 
     private void showHome() {
-        String html = "<!doctype html><html><meta name='viewport' content='width=device-width,initial-scale=1'><body style='margin:0;padding:24px;background:#101827;color:#f4f7fb;font:16px system-ui'><h2 style='text-align:center;color:#f0c15a'>ZLATKO Browser</h2><p style='text-align:center;color:#9aabc0'>Пребарување и веб-страници</p>"
-          + card("Google", "https://www.google.com/") + card("Copilot", "https://copilot.microsoft.com/")
-          + card("ZLATKO AI MODE", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/")
-          + card("Спортски вести", "https://www.google.com/search?q=sports+news")
-          + card("Formula 1", "https://www.google.com/search?q=Formula+1")
-          + card("Real Madrid", "https://www.google.com/search?q=Real+Madrid")
-          + "<p style='font-size:12px;color:#9aabc0'>Забелешка: некои веб-страници може да блокираат вчитување во Android WebView.</p></body></html>";
+        String html = "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'><meta charset='UTF-8'></head>"
+          + "<body style='margin:0;padding:18px;background:#101827;color:#f4f7fb;font:16px system-ui'>"
+          + "<h2 style='text-align:center;color:#f0c15a;margin:10px 0 4px'>ZLATKO Browser</h2>"
+          + "<p style='text-align:center;color:#9aabc0;margin:0 0 18px'>Веб-пребарувач и спортски центар</p>"
+          + "<div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px'>"
+          + card("✦", "ZLATKO AI MODE", "https://zlatkomarina0-ai.github.io/ZM-AL-MODE/")
+          + card("◈", "Copilot", "https://copilot.microsoft.com/")
+          + card("📰", "Вести", "https://www.google.com/search?q=latest+news")
+          + card("🏎", "F1 вести", "https://www.google.com/search?q=Formula+1+latest+news")
+          + card("⚽", "Real Madrid вести", "https://www.google.com/search?q=Real+Madrid+latest+news")
+          + card("📅", "F1 календар", "https://www.formula1.com/en/racing/2026.html")
+          + card("⚽", "Real Madrid распоред", "https://www.realmadrid.com/en-US/football/first-team/fixtures")
+          + card("◆", "Спортски проект", "https://github.com/zlatkomarina0-ai/ZM-AL-MODE")
+          + "</div><p style='font-size:12px;color:#9aabc0;text-align:center;margin-top:20px'>Внеси пребарување или веб-адреса во горното поле.</p>"
+          + "</body></html>";
         web.loadDataWithBaseURL("https://browser.local/", html, "text/html", "UTF-8", null);
         address.setText("");
     }
-    private String card(String label, String url) {
-        return "<a href='" + url + "' style='display:block;padding:16px;margin:12px 0;background:#182437;border:1px solid #2b3a50;border-radius:14px;color:#f0c15a;text-decoration:none;font-weight:700'>" + label + "　›</a>";
+    private String card(String icon, String label, String url) {
+        return "<a href='" + url + "' style='box-sizing:border-box;min-height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 6px;background:#182437;border:1px solid #2b3a50;border-radius:14px;color:#f0c15a;text-decoration:none;text-align:center;font-weight:700'>"
+          + "<span style='font-size:27px'>" + icon + "</span><span style='font-size:13px;line-height:1.3'>" + label + "</span></a>";
     }
     private void openAddress() {
         String value = address.getText().toString().trim();
