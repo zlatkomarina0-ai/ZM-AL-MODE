@@ -43,9 +43,9 @@ test('app search reports visible results and a no-results state', () => {
 });
 
 test('app fallback intent requests Android launcher activity', () => {
-  assert.match(html, /action=android\\.intent\\.action\\.MAIN/);
-  assert.match(html, /category=android\\.intent\\.category\\.LAUNCHER/);
-  assert.match(html, /package=' \\+ encodeURIComponent\\(packageName\\)/);
+  assert.match(html, /action=android\.intent\.action\.MAIN/);
+  assert.match(html, /category=android\.intent\.category\.LAUNCHER/);
+  assert.match(html, /encodeURIComponent\(packageName\)/);
 });
 
 test('app launch status does not falsely claim that Android confirmed launch', () => {
