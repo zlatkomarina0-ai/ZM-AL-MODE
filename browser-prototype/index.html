@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="mk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>ZLATKO Browser — prototype</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--panel:#182437;--line:#2b3a50;--gold:#f0c15a;--muted:#9aabc0;--text:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+header{height:58px;display:flex;align-items:center;gap:11px;padding:0 16px;border-bottom:1px solid var(--line);background:#121d2e;position:sticky;top:0;z-index:3}
+.logo{width:34px;height:34px;border-radius:11px;background:var(--gold);color:#142033;display:grid;place-items:center;font-weight:900;font-size:18px}
+.brand{font-weight:750;letter-spacing:.2px}.sub{font-size:11px;color:var(--muted);margin-top:1px}
+main{max-width:780px;margin:0 auto;padding:24px 16px 40px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:14px}.tab{border:1px solid var(--line);border-radius:12px;padding:9px 13px;white-space:nowrap;background:#152135;color:var(--muted);cursor:pointer}.tab.active{color:var(--text);border-color:#8b7138;background:#263047}
+.address{display:flex;gap:8px;background:#1b293d;border:1px solid #35465d;border-radius:17px;padding:8px;box-shadow:0 8px 30px #0002}
+.address input{min-width:0;flex:1;background:transparent;border:0;outline:0;color:var(--text);font:inherit;padding:0 9px}
+.round{border:0;border-radius:12px;background:#2a3a51;color:var(--text);width:42px;height:42px;font-size:19px;cursor:pointer}.go{background:var(--gold);color:#162033;font-weight:800}
+.toolbar{display:flex;gap:8px;align-items:center;margin-top:12px}.toolbar button{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px 11px;cursor:pointer}
+.welcome{text-align:center;padding:38px 10px 24px}.mark{margin:0 auto 16px;width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,#f5d27e,#dca83f);display:grid;place-items:center;color:#182438;font-size:30px;font-weight:900}.welcome h1{margin:0;font-size:27px}.welcome p{color:var(--muted);margin:8px auto 0;max-width:450px;line-height:1.5}
+.section-title{font-size:12px;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin:22px 2px 12px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.tile{min-height:112px;border:1px solid var(--line);background:var(--panel);border-radius:17px;padding:16px 12px;text-align:left;color:var(--text);cursor:pointer;transition:transform .12s,border-color .12s}
+.tile:active{transform:scale(.98)}.tile:hover{border-color:#8b7138}.tile-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#26364d;font-size:22px;margin-bottom:11px}.tile strong{display:block;font-size:14px}.tile small{display:block;color:var(--muted);margin-top:4px;font-size:11px}
+.note{margin-top:24px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;color:var(--muted);font-size:12px;line-height:1.5}
+#view{display:none;margin-top:20px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;color:#172033;min-height:48vh}
+#view iframe{width:100%;height:60vh;border:0;background:white}#blocked{padding:24px;line-height:1.55}
+@media(max-width:460px){main{padding:16px 12px 28px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.welcome{padding-top:30px}.welcome h1{font-size:24px}.tile{min-height:105px}}
+</style>
+</head>
+<body>
+<header><div class="logo">Z</div><div><div class="brand">ZLATKO Browser</div><div class="sub">Прототип · веб-прелистувач</div></div></header>
+<main>
+<div class="tabs" id="tabs"><button class="tab active" data-tab="home">⌂ Почетна</button><button class="tab" data-tab="copilot">Copilot</button><button class="tab" data-tab="zlatko">ZLATKO AI MODE</button><button class="tab" id="newtab">＋</button></div>
+<form class="address" id="nav"><button class="round" type="button" id="back" aria-label="Назад">‹</button><input id="url" autocomplete="url" placeholder="Пребарај или внеси веб-адреса" aria-label="Адреса или пребарување"><button class="round go" type="submit" aria-label="Отвори">↗</button></form>
+<div class="toolbar"><button id="refresh">⟳ Освежи</button><button id="homebtn">⌂ Почетна</button><button id="bookmark">☆ Обележи</button><span style="margin-left:auto;color:var(--muted);font-size:12px" id="status">Нов таб</span></div>
+<section id="homepage">
+<div class="welcome"><div class="mark">Z</div><h1>Добредојде</h1><p>Еден прелистувач за твоите веб-проекти. Отвори проект или внеси адреса горе.</p></div>
+<div class="section-title">Твои проекти</div>
+<div class="grid">
+<button class="tile" data-url="https://copilot.microsoft.com/"><span class="tile-icon">✦</span><strong>Copilot</strong><small>AI асистент</small></button>
+<button class="tile" data-url="https://zlatkomarina0-ai.github.io/ZM-AL-MODE/"><span class="tile-icon">Z</span><strong>ZLATKO AI MODE</strong><small>Главен веб-проект</small></button>
+<button class="tile" data-search="спортски вести"><span class="tile-icon">⚽</span><strong>Спортски вести</strong><small>Пребарај спорт</small></button>
+<button class="tile" data-search="F1 новости"><span class="tile-icon">🏁</span><strong>F1 вести</strong><small>Пребарај Formula 1</small></button>
+<button class="tile" data-search="Real Madrid новости"><span class="tile-icon">♜</span><strong>Real Madrid</strong><small>Вести и резултати</small></button>
+<button class="tile" data-url="https://www.google.com/"><span class="tile-icon">⌕</span><strong>Google</strong><small>Веб-пребарување</small></button>
+</div>
+<div class="note">Ова е прв визуелен прототип за преглед. Вистинската Android верзија треба да го користи Android WebView за страниците да се отвораат во самата апликација. Некои веб-страници може да забрануваат вчитување во вграден прозорец; тогаш ќе треба да се отвораат во целосниот прелистувач.</div>
+</section>
+<section id="view"><div id="blocked"></div><iframe id="frame" title="Веб-страница" style="display:none"></iframe></section>
+</main>
+<script>
+const $=s=>document.querySelector(s), homepage=$('#homepage'),view=$('#view'),frame=$('#frame'),urlInput=$('#url'),status=$('#status'),tabs=$('#tabs');
+let historyStack=[],current=-1,tabCount=1;
+function showHome(){homepage.style.display='block';view.style.display='none';urlInput.value='';status.textContent='Почетна';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab==='home'))}
+function navigate(raw){let target=(raw||'').trim();if(!target)return;if(!/^https?:\/\//i.test(target)){target=target.includes('.')&&!target.includes(' ')?'https://'+target:'https://www.google.com/search?q='+encodeURIComponent(target)}
+try{const u=new URL(target);if(!['http:','https:'].includes(u.protocol))return;target=u.href}catch{return}
+historyStack=historyStack.slice(0,current+1);historyStack.push(target);current=historyStack.length-1;urlInput.value=target;status.textContent='Вчитување…';homepage.style.display='none';view.style.display='block';$('#blocked').style.display='block';frame.style.display='none';$('#blocked').innerHTML='<strong>Се обидувам да ја отворам страницата</strong><p>'+target.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</p><p>Ако страницата не се прикаже тука, можно е да забранува вчитување во вграден прозорец. Во Android верзијата ова ќе биде вистински WebView.</p>';frame.src=target;frame.onload=()=>{status.textContent='Отворено';$('#blocked').style.display='none';frame.style.display='block'};frame.onerror=()=>{status.textContent='Страница недостапна'};document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))}
+$('#nav').addEventListener('submit',e=>{e.preventDefault();navigate(urlInput.value)});
+document.querySelectorAll('[data-url]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.url)));
+document.querySelectorAll('[data-search]').forEach(b=>b.addEventListener('click',()=>navigate('https://www.google.com/search?q='+encodeURIComponent(b.dataset.search))));
+$('#back').addEventListener('click',()=>{if(current>0){current--;navigateHistory(historyStack[current])}else showHome()});
+function navigateHistory(target){urlInput.value=target;homepage.style.display='none';view.style.display='block';$('#blocked').style.display='block';frame.style.display='none';frame.src=target;status.textContent='Назад';frame.onload=()=>{$('#blocked').style.display='none';frame.style.display='block'};}
+$('#refresh').addEventListener('click',()=>{if(current>=0)navigateHistory(historyStack[current]);else showHome()});$('#homebtn').addEventListener('click',showHome);$('#newtab').addEventListener('click',()=>{tabCount++;const b=document.createElement('button');b.className='tab active';b.textContent='Таб '+tabCount;b.onclick=()=>showHome();tabs.insertBefore(b,$('#newtab'));showHome()});$('#bookmark').addEventListener('click',()=>{if(current>=0){const b=document.createElement('button');b.className='tile';b.innerHTML='<span class="tile-icon">☆</span><strong>Обележана страница</strong><small></small>';b.querySelector('small').textContent=historyStack[current];b.onclick=()=>navigate(historyStack[current]);$('.grid').appendChild(b);status.textContent='Обележано'}});document.querySelectorAll('[data-tab]').forEach(t=>t.addEventListener('click',()=>{if(t.dataset.tab==='home')showHome();if(t.dataset.tab==='copilot')navigate('https://copilot.microsoft.com/');if(t.dataset.tab==='zlatko')navigate('https://zlatkomarina0-ai.github.io/ZM-AL-MODE/')}));showHome();
+</script>
+</body></html>
