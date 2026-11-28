@@ -248,18 +248,9 @@ export async function runScheduledJob({
 } = {}) {
   const generatedAt = now.toISOString();
 
-  if (eventName === 'schedule') {
-    const local = localScheduleParts(now);
-    if (!['Tue', 'Fri'].includes(local.weekday) || Number(local.hour) !== 7) {
-      const report = skippedReport(
-        'skipped_outside_local_schedule',
-        'GitHub cron fired outside the 07:00–07:59 Europe/Skopje window; no bulletin was processed.',
-        generatedAt,
-      );
-      await writeOutputs(report, outputDirectory);
-      return report;
-    }
-  }
+  // GitHub scheduled events can be delayed by queueing or service load.
+  // The workflow cron defines Tue/Fri; do not silently discard a valid run
+  // just because it starts outside the nominal 07:00 Europe/Skopje hour.
 
   let raw;
   let sourcePath = inputPath;

@@ -91,32 +91,26 @@ test('parses raw SportLife text without treating kickoff times as matches', () =
   assert.equal(matches[0].odds.away, 4.2);
 });
 
-test('honors 07:30 Europe/Skopje in both winter and summer UTC offsets', async () => {
+test('processes scheduled bulletin even when GitHub starts the run late', async () => {
   const root = await mkdtemp(join(tmpdir(), 'pluton-schedule-test-'));
   try {
-    const missingInput = join(root, 'missing-bulletin.json');
-    const summer = await runScheduledJob({
-      inputPath: missingInput,
-      outputDirectory: join(root, 'summer'),
+    const inputPath = join(root, 'bulletin.json');
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(inputPath, JSON.stringify({ matches: [
+      { matchId: 'LATE-1', homeTeam: 'Arsenal', awayTeam: 'Chelsea' },
+    ] }), 'utf8');
+
+    const delayed = await runScheduledJob({
+      inputPath,
+      outputDirectory: join(root, 'delayed'),
       eventName: 'schedule',
+      // 08:30 local: outside the old hard-coded hour gate.
       now: new Date('2026-06-02T05:30:00.000Z'),
     });
-    const winter = await runScheduledJob({
-      inputPath: missingInput,
-      outputDirectory: join(root, 'winter'),
-      eventName: 'schedule',
-      now: new Date('2026-11-24T06:30:00.000Z'),
-    });
-    const wrongSlot = await runScheduledJob({
-      inputPath: missingInput,
-      outputDirectory: join(root, 'wrong-slot'),
-      eventName: 'schedule',
-      now: new Date('2026-06-02T06:30:00.000Z'),
-    });
 
-    assert.equal(summer.status, 'skipped_missing_bulletin');
-    assert.equal(winter.status, 'skipped_missing_bulletin');
-    assert.equal(wrongSlot.status, 'skipped_outside_local_schedule');
+    assert.equal(delayed.status, 'completed');
+    assert.equal(delayed.counts.imported, 1);
+    assert.equal(delayed.tasks[0].matchId, 'LATE-1');
   } finally {
     await rm(root, { recursive: true, force: true });
   }
