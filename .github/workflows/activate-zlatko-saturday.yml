@@ -1,17 +1,17 @@
-name: ZLATKO AI MODE Saturday activation
+name: ZLATKO AI MODE Tuesday-Friday activation
 
 on:
   schedule:
-    # 07:30 Europe/Skopje across winter/summer time; the guard skips the other UTC slot.
-    - cron: '30 5 * * 6'
-    - cron: '30 6 * * 6'
+    # 07:30 Europe/Skopje on Tuesdays and Fridays; run both UTC slots for DST.
+    - cron: '30 5 * * 2,5'
+    - cron: '30 6 * * 2,5'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: zlatko-saturday-activation
+  group: zlatko-tuesday-friday-activation
   cancel-in-progress: false
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
     outputs:
       should_run: ${{ steps.guard.outputs.should_run }}
     steps:
-      - name: Only activate at 07:30 Europe/Skopje on Saturdays
+      - name: Only activate at 07:30 Europe/Skopje on Tuesdays and Fridays
         id: guard
         shell: bash
         run: |
@@ -36,7 +36,7 @@ jobs:
             hourCycle: 'h23',
           }).formatToParts(new Date());
           const values = Object.fromEntries(parts.map(p => [p.type, p.value]));
-          const shouldRun = values.weekday === 'Sat' && values.hour === '07';
+          const shouldRun = ['Tue', 'Fri'].includes(values.weekday) && values.hour === '07';
           console.log(`Skopje local time guard: ${values.weekday} ${values.hour}; activate=${shouldRun}`);
           console.log(`should_run=${shouldRun}`);
           await import('node:fs/promises').then(({ appendFile }) =>
