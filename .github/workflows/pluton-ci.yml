@@ -25,5 +25,7 @@ jobs:
         run: npm install
       - name: Scheduled PLUTON unit tests
         run: npm run test:pluton
+      - name: Phone app shell regression tests
+        run: npm run test:app-shell
       - name: TypeScript and Vite build
         run: npm run build
